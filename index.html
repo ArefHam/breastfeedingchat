@@ -144,10 +144,7 @@
       box-shadow: 0 10px 18px rgba(17,24,39,0.05);
     }
     .quick-btn i{ color: rgba(168,85,247,0.95); }
-    .quick-btn:hover {
-      transform: translateY(-2px);
-      border-color: rgba(168,85,247,0.45);
-    }
+    .quick-btn:hover { transform: translateY(-2px); border-color: rgba(168,85,247,0.45); }
 
     .chat-box {
       flex: 1;
@@ -163,13 +160,6 @@
       gap: 14px;
       overflow-x: hidden;
       z-index: 1;
-    }
-    .chat-box::-webkit-scrollbar { width: 10px; }
-    .chat-box::-webkit-scrollbar-track { background: rgba(241,241,241,0.7); border-radius: 999px; }
-    .chat-box::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, rgba(168,85,247,0.65), rgba(139,92,246,0.55));
-      border-radius: 999px;
-      border: 2px solid rgba(255,255,255,0.8);
     }
 
     .welcome-message {
@@ -272,16 +262,28 @@
     }
     .message-text strong{ font-weight: 800; }
 
-    /* ✅ CRITICAL: multilingual correctness */
+    /* multilingual correctness */
     .msg-rtl { direction: rtl; text-align: right; }
     .msg-ltr { direction: ltr; text-align: left; }
 
-    /* unicode-bidi plaintext prevents punctuation weirdness in mixed scripts */
+    /* exact rendering container */
     .rendered-answer {
       unicode-bidi: plaintext;
-      white-space: pre-wrap;      /* preserve newlines from backend */
+      white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
+
+    /* ✅ Typewriter look */
+    .typing-caret {
+      display: inline-block;
+      width: 10px;
+      margin-inline-start: 2px;
+      opacity: 0.9;
+      animation: caretBlink 0.9s infinite;
+      color: rgba(109,40,217,0.95);
+      font-weight: 800;
+    }
+    @keyframes caretBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
 
     .message-time {
       font-size: 12px;
@@ -398,11 +400,11 @@
       width: 8px; height: 8px;
       border-radius: 50%;
       background: linear-gradient(180deg, rgba(168,85,247,0.95), rgba(139,92,246,0.9));
-      animation: typing 1.4s infinite ease-in-out;
+      animation: dots 1.4s infinite ease-in-out;
     }
     .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
     .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+    @keyframes dots { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
 
     @media (max-width: 768px) {
       .chat-container { margin: 10px auto; border-radius: 18px; }
@@ -412,24 +414,6 @@
       button { width: 100%; }
       .quick-actions { justify-content: center; }
       .footer-info { flex-direction: column; gap: 10px; }
-      .bot-message::before, .user-message::after {
-        position: relative; left: 0; right: 0; top: 0;
-        display: inline-block;
-        margin: 0 8px 0 0;
-        width: 30px; height: 30px;
-        font-size: 16px;
-      }
-      .bot-message::before { margin-left: 8px; margin-right: 0; }
-      .user-message::after { margin-right: 8px; margin-left: 0; }
-      .bot-message, .user-message { position: relative; padding-left: 50px; padding-right: 50px; }
-      .bot-message::before {
-        position: absolute; left: 10px; top: 50%;
-        transform: translateY(-50%);
-      }
-      .user-message::after {
-        position: absolute; right: 10px; top: 50%;
-        transform: translateY(-50%);
-      }
     }
   </style>
 </head>
@@ -493,9 +477,7 @@
       const chatBox = document.getElementById("chat-box");
 
       // ---------- Utilities ----------
-      function scrollToBottom() {
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
+      function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
 
       function escapeHTML(str) {
         return String(str).replace(/[&<>"'`=\/]/g, (s) => ({
@@ -510,42 +492,24 @@
         })[s]);
       }
 
-      // ✅ Safe "markdown-lite": only **bold** + preserve line breaks.
-      // No lists. No splitting. No re-ordering. No extra injected text.
-      function renderAnswerExactly(rawText) {
+      // Apply markdown-lite AFTER typing finishes (so typing stays faithful)
+      function renderMarkdownLiteToHTML(rawText) {
         const text = (rawText == null) ? "" : String(rawText);
-
-        // 1) escape any HTML from server
         let safe = escapeHTML(text);
-
-        // 2) bold: **...**
         safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-
-        // 3) keep newlines visually
         safe = safe.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
-
         return safe;
       }
 
-      // ✅ Determine direction from the first strong character.
-      // Works for fa/ar/en and mixed text.
       function detectDir(text) {
         const s = (text == null) ? "" : String(text);
-
-        // Arabic + Persian blocks (broad)
         const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-        // Latin letters
         const ltrRe = /[A-Za-z]/;
-
-        // find first meaningful char
         for (const ch of s) {
           if (/\s/.test(ch)) continue;
           if (rtlRe.test(ch)) return "rtl";
           if (ltrRe.test(ch)) return "ltr";
-          // if it's a digit/punctuation, continue scanning
         }
-
-        // fallback: use page direction
         return document.documentElement.dir || "rtl";
       }
 
@@ -579,8 +543,50 @@
         return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
       }
 
+      // ---------- Typewriter (multilingual-safe) ----------
+      function computeTypingSpeedMs(text) {
+        const len = (text || "").length;
+        // Short answers: slower (feels human). Long answers: faster (avoid boredom).
+        if (len <= 300) return 18;
+        if (len <= 900) return 10;
+        return 6;
+      }
+
+      async function typeTextInto(preEl, fullText, { baseSpeedMs = 10, maxDurationMs = 9000 } = {}) {
+        // We type the RAW text (no HTML), preserving fidelity.
+        // We keep newlines by using a <pre> or white-space: pre-wrap.
+        preEl.textContent = "";
+        let i = 0;
+
+        // Cap total duration to avoid 2-minute typing for long texts.
+        const len = fullText.length || 1;
+        const estimated = len * baseSpeedMs;
+        const speed = (estimated > maxDurationMs) ? Math.max(2, Math.floor(maxDurationMs / len)) : baseSpeedMs;
+
+        return new Promise(resolve => {
+          function tick() {
+            if (i >= fullText.length) return resolve();
+
+            const ch = fullText.charAt(i);
+            preEl.textContent += ch;
+            i++;
+
+            // Micro-pauses for more natural feel (doesn't change content)
+            let s = speed;
+            if (ch === "\n") s = speed * 8;
+            else if (/[.!؟]/.test(ch)) s = speed * 10;
+            else if (/[,:؛]/.test(ch)) s = speed * 6;
+            else if (ch === " ") s = Math.max(1, Math.floor(speed * 0.7));
+
+            scrollToBottom();
+            setTimeout(tick, s);
+          }
+          tick();
+        });
+      }
+
       // ---------- Message creation ----------
-      function addMessage({ text, sender, metaPills = [] }) {
+      function addMessage({ text, sender, metaPills = [], typing = false }) {
         const container = document.createElement("div");
         container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
 
@@ -588,30 +594,49 @@
         msgText.className = "message-text";
 
         if (sender === "user") {
-          // user: always plain
           msgText.textContent = (text == null) ? "" : String(text);
-          container.classList.add("msg-rtl"); // UI is RTL for user bubble by default
+          container.classList.add("msg-rtl");
+          container.appendChild(msgText);
         } else {
-          // bot: render EXACT answer safely (no parsing)
           const dir = detectDir(text);
           container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
 
-          const html = renderAnswerExactly(text);
-          msgText.innerHTML = `<div class="rendered-answer">${html}</div>`;
-        }
+          if (!typing) {
+            // instant render (HTML-safe, markdown-lite)
+            msgText.innerHTML = `<div class="rendered-answer">${renderMarkdownLiteToHTML(text)}</div>`;
+            container.appendChild(msgText);
+          } else {
+            // typing mode: render raw text in a pre-like div + caret
+            const wrap = document.createElement("div");
+            wrap.className = "rendered-answer";
 
-        container.appendChild(msgText);
+            const pre = document.createElement("div");
+            pre.style.whiteSpace = "pre-wrap";
+            pre.style.unicodeBidi = "plaintext";
+            pre.style.overflowWrap = "anywhere";
+
+            const caret = document.createElement("span");
+            caret.className = "typing-caret";
+            caret.textContent = "▍";
+
+            wrap.appendChild(pre);
+            wrap.appendChild(caret);
+
+            msgText.appendChild(wrap);
+            container.appendChild(msgText);
+
+            // return handles so we can type into it
+            container.__typing = { pre, caret, rawText: String(text || "") };
+          }
+        }
 
         const timeDiv = document.createElement("div");
         timeDiv.className = "message-time";
-
-        // fancy pills: latency, status, etc.
         if (sender === "bot" && metaPills.length) {
           timeDiv.innerHTML = metaPills.map(p => pillHTML(p.label, p.cls)).join(" ");
         } else {
           timeDiv.textContent = timeHHMM();
         }
-
         container.appendChild(timeDiv);
 
         chatBox.appendChild(container);
@@ -622,23 +647,18 @@
 
       // ---------- Robust response extraction ----------
       function extractAnswer(data) {
-        // your n8n may return {answer:"..."} or {answer:{...}} or arrays
         const candidate =
           (data && (data.answer ?? data.response ?? data.text ?? data.output)) ??
           (Array.isArray(data) ? (data[0]?.answer ?? data[0]?.response ?? data[0]?.text ?? data[0]?.output) : null);
 
         if (candidate == null) return null;
-
         if (typeof candidate === "string") return candidate;
 
-        // If it comes as an object, try the common nested fields
         if (typeof candidate === "object") {
           if (typeof candidate.answer === "string") return candidate.answer;
           if (typeof candidate.output === "string") return candidate.output;
-          // last resort: stringify
           try { return JSON.stringify(candidate, null, 2); } catch { return String(candidate); }
         }
-
         return String(candidate);
       }
 
@@ -647,15 +667,13 @@
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeoutMs);
         try {
-          const res = await fetch(url, { ...options, signal: controller.signal });
-          return res;
+          return await fetch(url, { ...options, signal: controller.signal });
         } finally {
           clearTimeout(id);
         }
       }
 
       async function postToN8n(msg, sessionId) {
-        // One request only. No retries here by default (retries can cause double replies)
         const started = performance.now();
         const res = await fetchWithTimeout(
           N8N_WEBHOOK_URL,
@@ -664,7 +682,7 @@
             headers: { "Content-Type": "application/json", "Accept": "application/json" },
             body: JSON.stringify({ msg, sessionId })
           },
-          120000 // 120s timeout safety
+          120000
         );
 
         const latencyMs = Math.round(performance.now() - started);
@@ -691,8 +709,8 @@
         input.value = "";
         input.focus();
 
-        const typing = createTypingIndicator();
-        chatBox.appendChild(typing);
+        const typingIndicator = createTypingIndicator();
+        chatBox.appendChild(typingIndicator);
         scrollToBottom();
 
         isSending = true;
@@ -703,7 +721,7 @@
           const sessionId = getOrCreateSessionId();
           const { data, latencyMs } = await postToN8n(msg, sessionId);
 
-          if (typing && typing.parentNode) typing.parentNode.removeChild(typing);
+          if (typingIndicator && typingIndicator.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
 
           const answer = extractAnswer(data);
           if (!answer) {
@@ -712,19 +730,31 @@
             return;
           }
 
-          // show nice pill with latency
           const pill = latencyMs < 8000
             ? { label: `⏱ ${latencyMs}ms`, cls: "ok" }
             : { label: `⏱ ${Math.round(latencyMs/1000)}s`, cls: "warn" };
 
-          addMessage({
+          // ✅ Create bot message in typing mode
+          const botMsg = addMessage({
             text: answer,
             sender: "bot",
-            metaPills: [pill, { label: timeHHMM(), cls: "" }]
+            metaPills: [pill, { label: timeHHMM(), cls: "" }],
+            typing: true
           });
 
+          // ✅ Run typewriter safely
+          const t = botMsg.__typing;
+          const speed = computeTypingSpeedMs(t.rawText);
+
+          await typeTextInto(t.pre, t.rawText, { baseSpeedMs: speed, maxDurationMs: 9000 });
+
+          // After typing, replace with HTML-safe markdown-lite rendering (bold + <br>)
+          // This keeps fidelity and improves readability.
+          botMsg.querySelector(".message-text").innerHTML =
+            `<div class="rendered-answer">${renderMarkdownLiteToHTML(t.rawText)}</div>`;
+
         } catch (err) {
-          if (typing && typing.parentNode) typing.parentNode.removeChild(typing);
+          if (typingIndicator && typingIndicator.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
           addMessage({ text: "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.", sender: "bot", metaPills: [{label:"Error", cls:"warn"}] });
           console.error(err);
         } finally {
@@ -738,11 +768,9 @@
       clearBtn.addEventListener("click", function () {
         if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
 
-        // remove all .message nodes (keep welcome message)
         const messages = chatBox.querySelectorAll(".message");
         messages.forEach(m => m.remove());
 
-        // reset session for fresh conversation
         localStorage.removeItem("eveai_sessionId");
 
         addMessage({ text: "گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.", sender: "bot", metaPills: [{label:"Cleared", cls:"ok"}] });
