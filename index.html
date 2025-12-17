@@ -6,13 +6,8 @@
   <title>گپ و گفت مادرانه - راهنمای شیردهی</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Lalezar&display=swap" rel="stylesheet">
-  <style>
-    /* =========================
-       UI Refinement (CSS only)
-       - No changes to logic/flow
-       - Persian-first UX
-       ========================= */
 
+  <style>
     :root{
       --bg1:#fff7fb;
       --bg2:#f1f7ff;
@@ -20,11 +15,9 @@
       --ink:#1f2937;
       --muted:#6b7280;
 
-      --p1:#a855f7; /* primary */
-      --p2:#8b5cf6; /* primary 2 */
-      --p3:#ec4899; /* accent pink */
-      --c1:#22c55e; /* success */
-      --w1:#f97316; /* warning */
+      --p1:#a855f7;
+      --p2:#8b5cf6;
+      --p3:#ec4899;
 
       --line:#efe6ff;
       --soft:#faf7ff;
@@ -48,16 +41,8 @@
         radial-gradient(1000px 500px at 90% 0%, rgba(34,197,94,0.10), transparent 55%),
         radial-gradient(1100px 600px at 60% 110%, rgba(236,72,153,0.12), transparent 60%),
         linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
-      background-image:
-        radial-gradient(1200px 600px at 20% -10%, rgba(168,85,247,0.22), transparent 60%),
-        radial-gradient(1000px 500px at 90% 0%, rgba(34,197,94,0.10), transparent 55%),
-        radial-gradient(1100px 600px at 60% 110%, rgba(236,72,153,0.12), transparent 60%),
-        linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%),
-        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e6c6ff' fill-opacity='0.18'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
       overflow-x: hidden;
     }
-
-    /* subtle selection */
     ::selection{ background: rgba(168,85,247,0.25); }
 
     .header-decoration {
@@ -84,7 +69,6 @@
       position: relative;
     }
 
-    /* soft inner glow */
     .chat-container::before{
       content:"";
       position:absolute;
@@ -110,40 +94,59 @@
       z-index: 1;
       border-bottom: 1px solid rgba(255,255,255,0.12);
     }
-
-    /* header highlight line */
     .chat-header::after{
       content:"";
       position:absolute;
-      bottom:0;
-      left:0;
-      right:0;
+      bottom:0; left:0; right:0;
       height: 1px;
       background: linear-gradient(to left, rgba(255,255,255,0.35), rgba(255,255,255,0.08), rgba(255,255,255,0.35));
       opacity: 0.9;
     }
-
     .chat-header i {
       font-size: 26px;
       opacity: 0.95;
       filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));
     }
-
-    .chat-header > div{
-      line-height: 1.2;
-    }
-
-    .chat-header > div:first-child{
-      font-size: 26px;
-      letter-spacing: 0.2px;
-    }
-
+    .chat-header > div{ line-height: 1.2; }
+    .chat-header > div:first-child{ font-size: 26px; letter-spacing: 0.2px; }
     .header-subtitle {
       font-size: 14px;
       font-weight: 400;
       margin-top: 6px;
       opacity: 0.92;
       font-family: 'Vazirmatn', sans-serif;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 14px 8px;
+      background: rgba(252,250,255,0.92);
+      border-bottom: 1px solid rgba(239,230,255,0.8);
+      z-index: 1;
+    }
+    .quick-btn {
+      padding: 10px 14px;
+      background:
+        radial-gradient(240px 100px at 20% 20%, rgba(255,255,255,0.60), transparent 60%),
+        linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(237,233,254,0.92) 55%, rgba(240,249,255,0.75) 120%);
+      border: 1px solid rgba(221,214,254,0.75);
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #5b21b6;
+      transition: 0.18s ease;
+      font-family: 'Vazirmatn', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 18px rgba(17,24,39,0.05);
+    }
+    .quick-btn i{ color: rgba(168,85,247,0.95); }
+    .quick-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(168,85,247,0.45);
     }
 
     .chat-box {
@@ -161,12 +164,8 @@
       overflow-x: hidden;
       z-index: 1;
     }
-
     .chat-box::-webkit-scrollbar { width: 10px; }
-    .chat-box::-webkit-scrollbar-track {
-      background: rgba(241,241,241,0.7);
-      border-radius: 999px;
-    }
+    .chat-box::-webkit-scrollbar-track { background: rgba(241,241,241,0.7); border-radius: 999px; }
     .chat-box::-webkit-scrollbar-thumb {
       background: linear-gradient(180deg, rgba(168,85,247,0.65), rgba(139,92,246,0.55));
       border-radius: 999px;
@@ -184,7 +183,6 @@
       text-align: center;
       box-shadow: var(--shadow2);
     }
-
     .welcome-title {
       font-size: 20px;
       color: #6d28d9;
@@ -195,17 +193,7 @@
       justify-content: center;
       gap: 10px;
     }
-
-    .welcome-title i{
-      color: rgba(109,40,217,0.9);
-      filter: drop-shadow(0 6px 12px rgba(109,40,217,0.12));
-    }
-
-    .welcome-text {
-      color: #4b5563;
-      line-height: 1.85;
-      font-size: 15px;
-    }
+    .welcome-text { color: #4b5563; line-height: 1.85; font-size: 15px; }
 
     .message {
       margin: 5px 0;
@@ -213,13 +201,11 @@
       border-radius: 18px;
       max-width: 78%;
       word-wrap: break-word;
-      line-height: 1.7;
       box-shadow: 0 10px 24px rgba(17,24,39,0.06);
       position: relative;
       animation: fadeIn 0.25s ease-in-out;
       border: 1px solid transparent;
     }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -236,15 +222,11 @@
       margin-right: 44px;
       border: 1px solid rgba(255,255,255,0.12);
     }
-
     .bot-message {
       background: rgba(255,255,255,0.92);
       border: 1px solid rgba(233,213,255,0.95);
       margin-right: auto;
       border-bottom-left-radius: 6px;
-      text-align: right;
-      font-size: 16px;
-      line-height: 1.9;
       margin-left: 44px;
       box-shadow: 0 12px 28px rgba(88, 28, 135, 0.08);
     }
@@ -265,7 +247,6 @@
       box-shadow: 0 10px 20px rgba(168,85,247,0.14);
       border: 1px solid rgba(233,213,255,0.9);
     }
-
     .user-message::after {
       content: "💬";
       position: absolute;
@@ -283,74 +264,57 @@
       border: 1px solid rgba(221,214,254,0.9);
     }
 
+    .message-text {
+      font-size: 16px;
+      line-height: 1.95;
+      word-break: break-word;
+      letter-spacing: 0.1px;
+    }
+    .message-text strong{ font-weight: 800; }
+
+    /* ✅ CRITICAL: multilingual correctness */
+    .msg-rtl { direction: rtl; text-align: right; }
+    .msg-ltr { direction: ltr; text-align: left; }
+
+    /* unicode-bidi plaintext prevents punctuation weirdness in mixed scripts */
+    .rendered-answer {
+      unicode-bidi: plaintext;
+      white-space: pre-wrap;      /* preserve newlines from backend */
+      overflow-wrap: anywhere;
+    }
+
     .message-time {
       font-size: 12px;
       opacity: 0.75;
       margin-top: 9px;
-      text-align: left;
-      color: rgba(255,255,255,0.92);
-    }
-    .bot-message .message-time{
       color: rgba(75,85,99,0.8);
-    }
-
-    /* Better Persian typography inside responses */
-    .response-content { font-size: 16px; line-height: 2; }
-    .response-item { margin-bottom: 14px; padding-right: 10px; opacity: 1; }
-    .response-title {
-      font-weight: 800;
-      color: #6d28d9;
-      margin-bottom: 8px;
-      font-size: 16px;
       display: flex;
       align-items: center;
       gap: 10px;
     }
-    .response-title i {
-      color: var(--p1);
-      font-size: 15px;
-      background: rgba(168,85,247,0.10);
-      border: 1px solid rgba(168,85,247,0.18);
-      width: 28px;
-      height: 28px;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .response-text {
-      margin-bottom: 8px;
-      color: #374151;
-      white-space: pre-wrap;
-    }
+    .user-message .message-time { color: rgba(255,255,255,0.92); justify-content: flex-start; }
+    .bot-message .message-time  { justify-content: flex-end; }
 
-    .response-note {
-      background:
-        linear-gradient(135deg, rgba(34,197,94,0.10) 0%, rgba(109,40,217,0.06) 100%);
-      padding: 12px 14px;
-      border-radius: 12px;
-      margin-top: 14px;
-      border-right: 4px solid rgba(34,197,94,0.75);
-      font-size: 14px;
-      color: #374151;
-      box-shadow: 0 10px 20px rgba(17,24,39,0.05);
+    .pill {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(233,213,255,0.9);
+      background: rgba(243,232,255,0.7);
+      color: #6d28d9;
     }
-    .response-note i {
-      color: rgba(34,197,94,0.95);
-      margin-left: 6px;
-    }
+    .pill.ok { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.10); color: #166534; }
+    .pill.warn { border-color: rgba(249,115,22,0.25); background: rgba(249,115,22,0.10); color: #9a3412; }
 
     .input-area {
       display: flex;
       gap: 10px;
       padding: 16px 16px 18px;
       border-top: 1px solid rgba(239,230,255,0.95);
-      background:
-        linear-gradient(180deg, rgba(252,250,255,0.96) 0%, rgba(250,247,255,0.92) 100%);
+      background: linear-gradient(180deg, rgba(252,250,255,0.96) 0%, rgba(250,247,255,0.92) 100%);
       z-index: 1;
     }
-
-    input, select {
+    input {
       flex: 1;
       padding: 14px 16px;
       border-radius: 14px;
@@ -361,12 +325,7 @@
       background: rgba(255,255,255,0.95);
       box-shadow: 0 8px 18px rgba(17,24,39,0.04);
     }
-
-    input::placeholder{
-      color: rgba(107,114,128,0.85);
-    }
-
-    input:focus, select:focus {
+    input:focus {
       outline: none;
       border-color: rgba(168,85,247,0.75);
       box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.18);
@@ -388,106 +347,27 @@
       gap: 8px;
       box-shadow: 0 10px 22px rgba(17,24,39,0.07);
       user-select: none;
-      -webkit-tap-highlight-color: transparent;
     }
-
-    /* better focus for accessibility */
-    button:focus-visible{
-      outline: none;
-      box-shadow: 0 0 0 4px rgba(168,85,247,0.22), 0 10px 22px rgba(17,24,39,0.07);
-    }
-
     button#send-btn {
-      background:
-        radial-gradient(300px 120px at 20% 20%, rgba(255,255,255,0.18), transparent 60%),
-        linear-gradient(135deg, var(--p1) 0%, var(--p2) 85%);
+      background: radial-gradient(300px 120px at 20% 20%, rgba(255,255,255,0.18), transparent 60%),
+                  linear-gradient(135deg, var(--p1) 0%, var(--p2) 85%);
       color: #fff;
     }
-    button#send-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 28px rgba(168, 85, 247, 0.25);
-      filter: saturate(1.05);
-    }
-    button#send-btn:active{
-      transform: translateY(0px) scale(0.99);
-    }
-
+    button#send-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(168, 85, 247, 0.25); }
     button#clear-btn {
-      background:
-        radial-gradient(260px 110px at 20% 20%, rgba(255,255,255,0.18), transparent 60%),
-        linear-gradient(135deg, #fb923c 0%, var(--w1) 75%, #ea580c 120%);
+      background: radial-gradient(260px 110px at 20% 20%, rgba(255,255,255,0.18), transparent 60%),
+                  linear-gradient(135deg, #fb923c 0%, #f97316 75%, #ea580c 120%);
       color: #fff;
     }
-    button#clear-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 28px rgba(249, 115, 22, 0.22);
-      filter: saturate(1.05);
-    }
-    button#clear-btn:active{
-      transform: translateY(0px) scale(0.99);
-    }
-
-    /* Disabled state (your JS uses disabled) */
-    button:disabled{
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none !important;
-      filter: none !important;
-      box-shadow: none !important;
-    }
-    input:disabled{
-      opacity: 0.8;
-      cursor: not-allowed;
-    }
-
-    .quick-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 12px 14px 4px;
-      background: rgba(252,250,255,0.92);
-      border-bottom: 1px solid rgba(239,230,255,0.8);
-      z-index: 1;
-    }
-
-    .quick-btn {
-      padding: 10px 14px;
-      background:
-        radial-gradient(240px 100px at 20% 20%, rgba(255,255,255,0.60), transparent 60%),
-        linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(237,233,254,0.92) 55%, rgba(240,249,255,0.75) 120%);
-      border: 1px solid rgba(221,214,254,0.75);
-      border-radius: 999px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #5b21b6;
-      transition: 0.18s ease;
-      font-family: 'Vazirmatn', sans-serif;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 10px 18px rgba(17,24,39,0.05);
-    }
-    .quick-btn i{
-      color: rgba(168,85,247,0.95);
-    }
-    .quick-btn:hover {
-      transform: translateY(-2px);
-      background:
-        radial-gradient(260px 110px at 20% 20%, rgba(255,255,255,0.70), transparent 60%),
-        linear-gradient(135deg, rgba(221,214,254,0.95) 0%, rgba(237,233,254,0.92) 55%, rgba(240,249,255,0.78) 120%);
-      border-color: rgba(168,85,247,0.45);
-    }
-    .quick-btn:active{
-      transform: translateY(0px) scale(0.99);
-    }
+    button#clear-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(249, 115, 22, 0.22); }
+    button:disabled{ opacity: 0.6; cursor: not-allowed; transform: none !important; filter: none !important; box-shadow: none !important; }
 
     .footer-info {
       text-align: center;
       padding: 13px 16px;
       font-size: 13px;
       color: rgba(75,85,99,0.9);
-      background:
-        linear-gradient(180deg, rgba(248,245,255,0.95) 0%, rgba(255,255,255,0.90) 100%);
+      background: linear-gradient(180deg, rgba(248,245,255,0.95) 0%, rgba(255,255,255,0.90) 100%);
       border-top: 1px solid rgba(239,230,255,0.9);
       display: flex;
       justify-content: center;
@@ -496,15 +376,12 @@
       flex-wrap: wrap;
       z-index: 1;
     }
-    .footer-info i {
-      color: rgba(168,85,247,0.95);
-    }
+    .footer-info i { color: rgba(168,85,247,0.95); }
 
     .typing-indicator {
       display: flex;
       padding: 14px 14px;
-      background:
-        linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(240,249,255,0.88) 100%);
+      background: linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(240,249,255,0.88) 100%);
       border: 1px solid rgba(233,213,255,0.9);
       border-radius: 18px;
       width: fit-content;
@@ -515,7 +392,6 @@
       min-width: 160px;
       box-shadow: 0 12px 22px rgba(88, 28, 135, 0.08);
     }
-
     .typing-text { color: #6d28d9; font-size: 14px; font-weight: 600; }
     .typing-dots { display: flex; gap: 6px; }
     .typing-dots span {
@@ -523,95 +399,37 @@
       border-radius: 50%;
       background: linear-gradient(180deg, rgba(168,85,247,0.95), rgba(139,92,246,0.9));
       animation: typing 1.4s infinite ease-in-out;
-      box-shadow: 0 8px 16px rgba(168,85,247,0.18);
     }
     .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
     .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typing {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-8px); }
-    }
-
-    .typing-content { overflow: hidden; line-height: 2; font-size: 16px; }
-    .gradual-item { opacity: 0; transform: translateY(10px); animation: gradualAppear 0.5s ease-out forwards; }
-    @keyframes gradualAppear { to { opacity: 1; transform: translateY(0); } }
-
-    .progress-bar {
-      width: 100%;
-      height: 3px;
-      background: rgba(233,213,255,0.8);
-      border-radius: 999px;
-      margin-top: 10px;
-      overflow: hidden;
-      display: none;
-      box-shadow: inset 0 2px 6px rgba(17,24,39,0.06);
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(to left, rgba(34,197,94,0.75), rgba(168,85,247,0.9), rgba(139,92,246,0.85));
-      width: 0%;
-      border-radius: 999px;
-      animation: progress 1.5s ease-in-out infinite;
-    }
-    @keyframes progress {
-      0% { width: 0%; transform: translateX(-100%); }
-      50% { width: 100%; transform: translateX(0%); }
-      100% { width: 100%; transform: translateX(100%); }
-    }
-
-    /* Better spacing & readability for Persian digits and punctuation */
-    .message-text{
-      word-break: break-word;
-      letter-spacing: 0.1px;
-    }
-    .message-text strong{
-      font-weight: 800;
-    }
+    @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
 
     @media (max-width: 768px) {
       .chat-container { margin: 10px auto; border-radius: 18px; }
-      .chat-header { padding: 16px 14px 14px; }
-      .chat-header > div:first-child{ font-size: 22px; }
-      .header-subtitle{ font-size: 13px; }
       .chat-box { height: 450px; padding: 14px 10px 18px 12px; }
       .message { max-width: 88%; margin-right: 0 !important; margin-left: 0 !important; }
-      .bot-message { font-size: 15px; }
       .input-area { flex-direction: column; padding: 14px; }
       button { width: 100%; }
-      .quick-actions { justify-content: center; padding: 10px 12px 4px; }
+      .quick-actions { justify-content: center; }
       .footer-info { flex-direction: column; gap: 10px; }
-
       .bot-message::before, .user-message::after {
         position: relative; left: 0; right: 0; top: 0;
         display: inline-block;
         margin: 0 8px 0 0;
         width: 30px; height: 30px;
         font-size: 16px;
-        vertical-align: middle;
       }
-      .bot-message::before { content: "🤱"; margin-left: 8px; margin-right: 0; }
-      .user-message::after { content: "💬"; margin-right: 8px; margin-left: 0; }
+      .bot-message::before { margin-left: 8px; margin-right: 0; }
+      .user-message::after { margin-right: 8px; margin-left: 0; }
       .bot-message, .user-message { position: relative; padding-left: 50px; padding-right: 50px; }
       .bot-message::before {
         position: absolute; left: 10px; top: 50%;
-        transform: translateY(-50%); margin: 0;
+        transform: translateY(-50%);
       }
       .user-message::after {
         position: absolute; right: 10px; top: 50%;
-        transform: translateY(-50%); margin: 0;
+        transform: translateY(-50%);
       }
-
-      .typing-indicator{ margin-left: 0; }
-    }
-
-    @media (max-width: 480px) {
-      .chat-header { flex-direction: column; gap: 8px; }
-      .welcome-title { flex-direction: column; gap: 6px; }
-      .quick-btn{ width: 100%; justify-content: center; }
-      input{ font-size: 15px; }
-      .response-title { font-size: 15px; }
-      .message { max-width: 92%; }
-      .chat-box { padding: 12px 8px 16px 10px; }
     }
   </style>
 </head>
@@ -634,6 +452,8 @@
       <button class="quick-btn" data-question="فواید شیر مادر چیست؟"><i class="fas fa-heartbeat"></i> فواید شیر مادر</button>
       <button class="quick-btn" data-question="راههای افزایش شیر مادر چیست؟"><i class="fas fa-plus-circle"></i> افزایش شیر</button>
       <button class="quick-btn" data-question="تغذیه مادر شیرده"><i class="fas fa-apple-alt"></i> تغذیه مادر</button>
+      <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk while breastfeeding?"><i class="fas fa-language"></i> English test</button>
+      <button class="quick-btn" data-question="كيف أعرف أن طفلي يحصل على ما يكفي من الحليب أثناء الرضاعة؟"><i class="fas fa-language"></i> Arabic test</button>
     </div>
 
     <div id="chat-box" class="chat-box">
@@ -664,8 +484,6 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      // ✅ n8n Webhook endpoint
-      // Make sure n8n CORS allows https://chat.eveai.cloud (or your hosting domain)
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
       const sendBtn = document.getElementById("send-btn");
@@ -674,311 +492,72 @@
       const quickButtons = document.querySelectorAll(".quick-btn");
       const chatBox = document.getElementById("chat-box");
 
-      // -------- Utilities --------
+      // ---------- Utilities ----------
       function scrollToBottom() {
         chatBox.scrollTop = chatBox.scrollHeight;
       }
 
       function escapeHTML(str) {
-        // Prevent accidental HTML injection from server responses
-        return String(str).replace(/[&<>"'`=\/]/g, function (s) {
-          return ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;",
-            "`": "&#x60;",
-            "=": "&#x3D;",
-            "/": "&#x2F;"
-          })[s];
-        });
+        return String(str).replace(/[&<>"'`=\/]/g, (s) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+          "`": "&#x60;",
+          "=": "&#x3D;",
+          "/": "&#x2F;"
+        })[s]);
+      }
+
+      // ✅ Safe "markdown-lite": only **bold** + preserve line breaks.
+      // No lists. No splitting. No re-ordering. No extra injected text.
+      function renderAnswerExactly(rawText) {
+        const text = (rawText == null) ? "" : String(rawText);
+
+        // 1) escape any HTML from server
+        let safe = escapeHTML(text);
+
+        // 2) bold: **...**
+        safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+        // 3) keep newlines visually
+        safe = safe.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
+
+        return safe;
+      }
+
+      // ✅ Determine direction from the first strong character.
+      // Works for fa/ar/en and mixed text.
+      function detectDir(text) {
+        const s = (text == null) ? "" : String(text);
+
+        // Arabic + Persian blocks (broad)
+        const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+        // Latin letters
+        const ltrRe = /[A-Za-z]/;
+
+        // find first meaningful char
+        for (const ch of s) {
+          if (/\s/.test(ch)) continue;
+          if (rtlRe.test(ch)) return "rtl";
+          if (ltrRe.test(ch)) return "ltr";
+          // if it's a digit/punctuation, continue scanning
+        }
+
+        // fallback: use page direction
+        return document.documentElement.dir || "rtl";
       }
 
       function getOrCreateSessionId() {
         let sessionId = localStorage.getItem("eveai_sessionId");
         if (!sessionId) {
-          // crypto.randomUUID() is supported in modern browsers
-          sessionId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + "_" + Math.random().toString(16).slice(2));
+          sessionId = (crypto && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : (Date.now() + "_" + Math.random().toString(16).slice(2));
           localStorage.setItem("eveai_sessionId", sessionId);
         }
         return sessionId;
-      }
-
-      // -------- Answer formatting (your original logic, with safe escaping) --------
-      function parseAnswer(rawText) {
-        // 1) ensure string
-        let text = (rawText == null) ? "" : String(rawText);
-
-        // 2) strip possible "( اطلاعات مرجع:" part (your original behavior)
-        const sourceIndex = text.indexOf("( اطلاعات مرجع:");
-        if (sourceIndex !== -1) {
-          text = text.substring(0, sourceIndex);
-        }
-
-        // 3) escape HTML to avoid injection, then allow **bold**
-        text = escapeHTML(text);
-        text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-
-        const sections = text.split(/(\d+\.)/g);
-        const items = [];
-
-        if (text.includes("1.")) {
-          for (let i = 1; i < sections.length; i += 2) {
-            if (sections[i] && sections[i + 1]) {
-              const number = sections[i];
-              const content = (sections[i + 1] || "").trim();
-
-              let title = content;
-              let description = "";
-
-              const colonIndex = content.indexOf(":");
-              if (colonIndex > -1) {
-                title = content.substring(0, colonIndex + 1);
-                description = content.substring(colonIndex + 1).trim();
-              }
-
-              const icons = [
-                "fa-baby",
-                "fa-home-heart",
-                "fa-bed",
-                "fa-child",
-                "fa-droplet",
-                "fa-clock",
-                "fa-exchange-alt",
-                "fa-hand-holding-heart"
-              ];
-              const iconIndex = (parseInt(number, 10) - 1) % icons.length;
-
-              items.push({
-                type: "item",
-                number: number,
-                title: title,
-                description: description,
-                icon: icons[iconIndex]
-              });
-            }
-          }
-
-          // optional "note" at the end (kept from your original design)
-          items.push({
-            type: "note",
-            text: "منبع معتبر: اطلاعات ارائه شده بر اساس منابع علمی و مشاوره‌های تخصصی شیردهی می‌باشد.",
-            icon: "fa-info-circle"
-          });
-        } else {
-          items.push({ type: "text", text: text });
-        }
-
-        return items;
-      }
-
-      function createHtmlFromItems(items) {
-        let html = "";
-        items.forEach(item => {
-          if (item.type === "item") {
-            html += `
-              <div class="response-item gradual-item">
-                <div class="response-title">
-                  <i class="fas ${item.icon}"></i>
-                  ${item.number} ${item.title}
-                </div>
-                ${item.description ? `<div class="response-text">${item.description}</div>` : ""}
-              </div>
-            `;
-          } else if (item.type === "note") {
-            html += `
-              <div class="response-note gradual-item">
-                <i class="fas ${item.icon}"></i>
-                <strong>${item.text}</strong>
-              </div>
-            `;
-          } else if (item.type === "text") {
-            html += `<div class="response-text gradual-item">${item.text}</div>`;
-          }
-        });
-
-        return `<div class="response-content">${html}</div>`;
-      }
-
-      async function gradualTypeWriter(element, items, speed = 25) {
-        element.innerHTML = "";
-
-        const container = document.createElement("div");
-        container.className = "response-content";
-        element.appendChild(container);
-
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-
-          if (item.type === "item") {
-            const itemElement = document.createElement("div");
-            itemElement.className = "response-item gradual-item";
-            itemElement.style.opacity = "0";
-            itemElement.style.transform = "translateY(10px)";
-
-            const titleElement = document.createElement("div");
-            titleElement.className = "response-title";
-
-            const iconElement = document.createElement("i");
-            iconElement.className = `fas ${item.icon}`;
-            iconElement.style.opacity = "0";
-            iconElement.style.transform = "scale(0.5)";
-            iconElement.style.transition = "all 0.3s ease 0.2s";
-
-            const textSpan = document.createElement("span");
-            // Title may contain <strong> so use innerHTML, but it's already escaped earlier
-            textSpan.innerHTML = `${item.number} ${item.title}`;
-            textSpan.style.opacity = "0";
-
-            titleElement.appendChild(iconElement);
-            titleElement.appendChild(textSpan);
-            itemElement.appendChild(titleElement);
-
-            if (item.description) {
-              const descElement = document.createElement("div");
-              descElement.className = "response-text";
-              // description may contain <strong> so use innerHTML, but it's already escaped earlier
-              descElement.innerHTML = item.description;
-              descElement.style.opacity = "0";
-              itemElement.appendChild(descElement);
-            }
-
-            container.appendChild(itemElement);
-
-            setTimeout(() => {
-              itemElement.style.transition = "opacity 0.5s ease, transform 0.5s ease";
-              itemElement.style.opacity = "1";
-              itemElement.style.transform = "translateY(0)";
-
-              setTimeout(() => {
-                iconElement.style.opacity = "1";
-                iconElement.style.transform = "scale(1)";
-              }, 200);
-
-              setTimeout(() => {
-                textSpan.style.transition = "opacity 0.3s ease";
-                textSpan.style.opacity = "1";
-
-                if (item.description) {
-                  setTimeout(() => {
-                    const descElement = itemElement.querySelector(".response-text");
-                    if (descElement) {
-                      descElement.style.transition = "opacity 0.5s ease";
-                      descElement.style.opacity = "1";
-
-                      // For typing effect, use textContent version of description (strip tags)
-                      const tmp = document.createElement("div");
-                      tmp.innerHTML = item.description;
-                      const plain = tmp.textContent || tmp.innerText || "";
-
-                      if (plain.length > 0) {
-                        // Replace existing HTML with plain typing
-                        descElement.textContent = "";
-                        typeTextGradually(descElement, plain, speed);
-                      }
-                    }
-                  }, 300);
-                }
-              }, 400);
-            }, i * 500);
-
-            await new Promise(resolve => {
-              setTimeout(resolve, 800 + (item.description ? item.description.length * (speed / 2) : 0));
-            });
-
-          } else if (item.type === "note") {
-            const itemElement = document.createElement("div");
-            itemElement.className = "response-note gradual-item";
-            itemElement.style.opacity = "0";
-            itemElement.style.transform = "translateY(10px)";
-
-            const iconElement = document.createElement("i");
-            iconElement.className = `fas ${item.icon}`;
-            iconElement.style.opacity = "0";
-            iconElement.style.transform = "scale(0.5)";
-            iconElement.style.transition = "all 0.3s ease 0.2s";
-
-            const textSpan = document.createElement("span");
-            textSpan.innerHTML = `<strong>${escapeHTML(item.text)}</strong>`;
-            textSpan.style.opacity = "0";
-
-            itemElement.appendChild(iconElement);
-            itemElement.appendChild(textSpan);
-            container.appendChild(itemElement);
-
-            setTimeout(() => {
-              itemElement.style.transition = "opacity 0.5s ease, transform 0.5s ease";
-              itemElement.style.opacity = "1";
-              itemElement.style.transform = "translateY(0)";
-
-              setTimeout(() => {
-                iconElement.style.opacity = "1";
-                iconElement.style.transform = "scale(1)";
-                setTimeout(() => {
-                  textSpan.style.transition = "opacity 0.3s ease";
-                  textSpan.style.opacity = "1";
-                }, 200);
-              }, 200);
-            }, i * 500);
-
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-          } else if (item.type === "text") {
-            const itemElement = document.createElement("div");
-            itemElement.className = "response-text gradual-item";
-            itemElement.style.opacity = "0";
-            itemElement.style.transform = "translateY(10px)";
-
-            container.appendChild(itemElement);
-
-            setTimeout(() => {
-              itemElement.style.transition = "opacity 0.5s ease, transform 0.5s ease";
-              itemElement.style.opacity = "1";
-              itemElement.style.transform = "translateY(0)";
-
-              const tmp = document.createElement("div");
-              tmp.innerHTML = item.text; // already escaped earlier
-              const plain = tmp.textContent || tmp.innerText || "";
-              if (plain.length > 0) {
-                typeTextGradually(itemElement, plain, speed);
-              }
-            }, i * 500);
-
-            await new Promise(resolve => {
-              setTimeout(resolve, 500 + (item.text ? item.text.length * (speed / 2) : 0));
-            });
-          }
-
-          scrollToBottom();
-        }
-      }
-
-      function typeTextGradually(element, text, speed) {
-        return new Promise(resolve => {
-          element.textContent = "";
-          let i = 0;
-
-          function typeNext() {
-            if (i < text.length) {
-              element.textContent += text.charAt(i);
-              i++;
-
-              let currentSpeed = speed;
-              const currentChar = text.charAt(i - 1);
-
-              if (currentChar === "." || currentChar === "!" || currentChar === "؟") currentSpeed = speed * 3;
-              else if (currentChar === "," || currentChar === ";" || currentChar === ":") currentSpeed = speed * 2;
-              else if (currentChar === " ") currentSpeed = speed / 1.5;
-
-              setTimeout(typeNext, currentSpeed);
-            } else {
-              resolve();
-            }
-          }
-
-          typeNext();
-        });
       }
 
       function createTypingIndicator() {
@@ -986,74 +565,120 @@
         typingDiv.className = "typing-indicator";
         typingDiv.innerHTML = `
           <div class="typing-text">در حال دریافت پاسخ...</div>
-          <div class="typing-dots">
-            <span></span><span></span><span></span>
-          </div>
+          <div class="typing-dots"><span></span><span></span><span></span></div>
         `;
         return typingDiv;
       }
 
-      function createProgressBar() {
-        const progressDiv = document.createElement("div");
-        progressDiv.className = "progress-bar";
-        progressDiv.innerHTML = '<div class="progress-fill"></div>';
-        return progressDiv;
+      function timeHHMM() {
+        const t = new Date();
+        return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`;
       }
 
-      function addMessage(text, sender, formatted = false, showTyping = false) {
-        const div = document.createElement("div");
-        div.className = "message " + (sender === "user" ? "user-message" : "bot-message");
+      function pillHTML(label, cls) {
+        return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
+      }
 
-        const time = new Date();
-        const timeString = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+      // ---------- Message creation ----------
+      function addMessage({ text, sender, metaPills = [] }) {
+        const container = document.createElement("div");
+        container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
 
-        const textDiv = document.createElement("div");
-        textDiv.className = "message-text";
+        const msgText = document.createElement("div");
+        msgText.className = "message-text";
 
-        if (formatted && sender === "bot") {
-          const items = parseAnswer(text);
-          textDiv.innerHTML = createHtmlFromItems(items);
+        if (sender === "user") {
+          // user: always plain
+          msgText.textContent = (text == null) ? "" : String(text);
+          container.classList.add("msg-rtl"); // UI is RTL for user bubble by default
         } else {
-          // user messages: treat as plain text
-          textDiv.textContent = (text == null ? "" : String(text));
+          // bot: render EXACT answer safely (no parsing)
+          const dir = detectDir(text);
+          container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
+
+          const html = renderAnswerExactly(text);
+          msgText.innerHTML = `<div class="rendered-answer">${html}</div>`;
         }
 
-        div.appendChild(textDiv);
+        container.appendChild(msgText);
 
         const timeDiv = document.createElement("div");
         timeDiv.className = "message-time";
-        timeDiv.textContent = timeString;
-        div.appendChild(timeDiv);
 
-        if (showTyping && sender === "bot") {
-          textDiv.style.display = "none";
-
-          const typingDiv = document.createElement("div");
-          typingDiv.className = "typing-content";
-          div.insertBefore(typingDiv, timeDiv);
-
-          const progressBar = createProgressBar();
-          progressBar.style.display = "block";
-          div.appendChild(progressBar);
-
-          chatBox.appendChild(div);
-          scrollToBottom();
-
-          return {
-            container: div,
-            textElement: textDiv,
-            typingElement: typingDiv,
-            progressBar: progressBar,
-            items: formatted ? parseAnswer(text) : null
-          };
+        // fancy pills: latency, status, etc.
+        if (sender === "bot" && metaPills.length) {
+          timeDiv.innerHTML = metaPills.map(p => pillHTML(p.label, p.cls)).join(" ");
         } else {
-          chatBox.appendChild(div);
-          scrollToBottom();
-          return { container: div, textElement: textDiv, typingElement: null, progressBar: null, items: null };
+          timeDiv.textContent = timeHHMM();
+        }
+
+        container.appendChild(timeDiv);
+
+        chatBox.appendChild(container);
+        scrollToBottom();
+
+        return container;
+      }
+
+      // ---------- Robust response extraction ----------
+      function extractAnswer(data) {
+        // your n8n may return {answer:"..."} or {answer:{...}} or arrays
+        const candidate =
+          (data && (data.answer ?? data.response ?? data.text ?? data.output)) ??
+          (Array.isArray(data) ? (data[0]?.answer ?? data[0]?.response ?? data[0]?.text ?? data[0]?.output) : null);
+
+        if (candidate == null) return null;
+
+        if (typeof candidate === "string") return candidate;
+
+        // If it comes as an object, try the common nested fields
+        if (typeof candidate === "object") {
+          if (typeof candidate.answer === "string") return candidate.answer;
+          if (typeof candidate.output === "string") return candidate.output;
+          // last resort: stringify
+          try { return JSON.stringify(candidate, null, 2); } catch { return String(candidate); }
+        }
+
+        return String(candidate);
+      }
+
+      // ---------- Networking ----------
+      async function fetchWithTimeout(url, options, timeoutMs) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, { ...options, signal: controller.signal });
+          return res;
+        } finally {
+          clearTimeout(id);
         }
       }
 
-      // -------- Main send logic (calls n8n) --------
+      async function postToN8n(msg, sessionId) {
+        // One request only. No retries here by default (retries can cause double replies)
+        const started = performance.now();
+        const res = await fetchWithTimeout(
+          N8N_WEBHOOK_URL,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ msg, sessionId })
+          },
+          120000 // 120s timeout safety
+        );
+
+        const latencyMs = Math.round(performance.now() - started);
+
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(`HTTP ${res.status} ${res.statusText} :: ${txt.slice(0, 200)}`);
+        }
+
+        const data = await res.json();
+        return { data, latencyMs };
+      }
+
+      // ---------- Main send logic ----------
       let isSending = false;
 
       async function sendMessage() {
@@ -1062,12 +687,12 @@
         const msg = input.value.trim();
         if (!msg) return;
 
-        addMessage(msg, "user");
+        addMessage({ text: msg, sender: "user" });
         input.value = "";
         input.focus();
 
-        const typingIndicator = createTypingIndicator();
-        chatBox.appendChild(typingIndicator);
+        const typing = createTypingIndicator();
+        chatBox.appendChild(typing);
         scrollToBottom();
 
         isSending = true;
@@ -1076,52 +701,31 @@
 
         try {
           const sessionId = getOrCreateSessionId();
+          const { data, latencyMs } = await postToN8n(msg, sessionId);
 
-          const response = await fetch(N8N_WEBHOOK_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            body: JSON.stringify({
-              msg: msg,
-              sessionId: sessionId
-            })
+          if (typing && typing.parentNode) typing.parentNode.removeChild(typing);
+
+          const answer = extractAnswer(data);
+          if (!answer) {
+            addMessage({ text: "پاسخ نامعتبر از سرور دریافت شد.", sender: "bot", metaPills: [{label:"Invalid", cls:"warn"}] });
+            console.log("Raw n8n response:", data);
+            return;
+          }
+
+          // show nice pill with latency
+          const pill = latencyMs < 8000
+            ? { label: `⏱ ${latencyMs}ms`, cls: "ok" }
+            : { label: `⏱ ${Math.round(latencyMs/1000)}s`, cls: "warn" };
+
+          addMessage({
+            text: answer,
+            sender: "bot",
+            metaPills: [pill, { label: timeHHMM(), cls: "" }]
           });
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-
-          const data = await response.json();
-
-          // remove typing indicator
-          if (typingIndicator && typingIndicator.parentNode) {
-            typingIndicator.parentNode.removeChild(typingIndicator);
-          }
-
-          // ✅ Robust extraction (supports multiple possible n8n return shapes)
-          const answer =
-            (data && (data.answer ?? data.response ?? data.text)) ??
-            (Array.isArray(data) ? (data[0]?.answer ?? data[0]?.response ?? data[0]?.text) : null);
-
-          if (answer) {
-            const messageElements = addMessage(answer, "bot", true, true);
-            await gradualTypeWriter(messageElements.typingElement, messageElements.items, 20);
-
-            if (messageElements.typingElement) messageElements.typingElement.style.display = "none";
-            messageElements.textElement.style.display = "block";
-            if (messageElements.progressBar) messageElements.progressBar.remove();
-          } else {
-            addMessage("پاسخ نامعتبر از سرور دریافت شد.", "bot");
-            console.log("Raw n8n response:", data);
-          }
-
         } catch (err) {
-          if (typingIndicator && typingIndicator.parentNode) {
-            typingIndicator.parentNode.removeChild(typingIndicator);
-          }
-          addMessage("مشکلی پیش آمد. لطفاً دوباره تلاش کنید.", "bot");
+          if (typing && typing.parentNode) typing.parentNode.removeChild(typing);
+          addMessage({ text: "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.", sender: "bot", metaPills: [{label:"Error", cls:"warn"}] });
           console.error(err);
         } finally {
           isSending = false;
@@ -1130,9 +734,7 @@
         }
       }
 
-      // -------- Clear behavior --------
-      // This clears ONLY the browser chat + sessionId.
-      // If you want to clear server-side memory too, create another n8n webhook and call it here.
+      // ---------- Clear behavior ----------
       clearBtn.addEventListener("click", function () {
         if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
 
@@ -1143,10 +745,10 @@
         // reset session for fresh conversation
         localStorage.removeItem("eveai_sessionId");
 
-        addMessage("گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.", "bot");
+        addMessage({ text: "گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.", sender: "bot", metaPills: [{label:"Cleared", cls:"ok"}] });
       });
 
-      // events
+      // ---------- Events ----------
       sendBtn.addEventListener("click", sendMessage);
       input.addEventListener("keydown", function (e) {
         if (e.key === "Enter") sendMessage();
