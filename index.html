@@ -613,21 +613,16 @@
         return container;
       }
 
-      function extractAnswer(data) {
-        const candidate =
-          (data && (data.answer ?? data.response ?? data.text ?? data.output)) ??
-          (Array.isArray(data) ? (data[0]?.answer ?? data[0]?.response ?? data[0]?.text ?? data[0]?.output) : null);
+function extractAnswer(data) {
+  const candidate =
+    (data && (data.answer ?? data.response ?? data.text ?? data.output)) ??
+    (Array.isArray(data) ? (data[0]?.answer ?? data[0]?.response ?? data[0]?.text ?? data[0]?.output) : null);
 
-        if (candidate == null) return null;
-        if (typeof candidate === "string") return candidate;
+  if (candidate == null) return null;
+  if (typeof candidate === "string") return candidate;
 
-        if (typeof candidate === "object") {
-          if (typeof candidate.answer === "string") return candidate.answer;
-          if (typeof candidate.output === "string") return candidate.output;
-          try { return JSON.stringify(candidate, null, 2); } catch { return String(candidate); }
-        }
-        return String(candidate);
-      }
+  try { return JSON.stringify(candidate, null, 2); } catch { return String(candidate); }
+}
 
       function looksLikeJSON(s) {
         const t = (s || "").trim();
@@ -668,168 +663,150 @@
         return payloadStr;
       }
 
-      async function postToN8nStreaming({ msg, sessionId, onToken, onFinalJSON, timeoutMs = 120000 }) {
-        const started = performance.now();
+async function postToN8nStreaming(msg, sessionId, onChunk) {
+  const started = performance.now();
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const res = await fetch(N8N_WEBHOOK_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "text/event-stream" // IMPORTANT: request streaming
+    },
+    body: JSON.stringify({ msg, sessionId })
+  });
 
-        try {
-          const res = await fetch(N8N_WEBHOOK_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "text/event-stream, application/json"
-            },
-            body: JSON.stringify({ msg, sessionId }),
-            signal: controller.signal,
-            cache: "no-store"
-          });
+  const ct = (res.headers.get("content-type") || "").toLowerCase();
+  const latencyMs = Math.round(performance.now() - started);
 
-          if (!res.ok) {
-            const txt = await res.text().catch(() => "");
-            throw new Error(`HTTP ${res.status} ${res.statusText} :: ${txt.slice(0, 200)}`);
-          }
+  // If server still returns JSON, fallback path
+  if (ct.includes("application/json")) {
+    const data = await res.json();
+    return { mode: "json", data, latencyMs };
+  }
 
-          const ct = (res.headers.get("content-type") || "").toLowerCase();
+  // If no body, fallback
+  if (!res.body) {
+    const text = await res.text().catch(() => "");
+    return { mode: "text", data: { output: text }, latencyMs };
+  }
 
-          // JSON fallback
-          if (!res.body || ct.includes("application/json")) {
-            const data = await res.json();
-            onFinalJSON?.(data);
-            return { latencyMs: Math.round(performance.now() - started), streamed: false };
-          }
+  // SSE / streaming text reader
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
 
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder("utf-8");
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
 
-          let buffer = "";
-          let sawAnyToken = false;
+    buffer += decoder.decode(value, { stream: true });
 
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
+    // SSE frames are usually separated by \n\n
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() || "";
 
-            buffer += decoder.decode(value, { stream: true });
+    for (const part of parts) {
+      // handle "data: ...."
+      const line = part.split("\n").find(l => l.startsWith("data:"));
+      if (!line) continue;
 
-            const { chunks, rest } = parseSSEFrames(buffer);
-            buffer = rest;
+      const payload = line.replace(/^data:\s*/, "");
 
-            for (const s of chunks) {
-              const tokenOrObj = payloadToToken(s);
+      // payload may be raw text or JSON; try JSON first
+      let chunkText = payload;
+      try {
+        const obj = JSON.parse(payload);
+        chunkText = obj.token ?? obj.delta ?? obj.text ?? obj.output ?? payload;
+      } catch {}
 
-              if (tokenOrObj === "__DONE__") continue;
+      if (chunkText) onChunk(chunkText);
+    }
+  }
 
-              if (typeof tokenOrObj === "object" && tokenOrObj && tokenOrObj.__json) {
-                onFinalJSON?.(tokenOrObj.__json);
-                continue;
-              }
+  return { mode: "stream", data: null, latencyMs };
+}
 
-              const tok = String(tokenOrObj || "");
-              if (!tok) continue;
+async function sendMessage() {
+  if (isSending) return;
 
-              sawAnyToken = true;
-              onToken(tok);
-            }
-          }
+  const msg = input.value.trim();
+  if (!msg) return;
 
-          const tail = (buffer || "").trim();
-          if (tail && looksLikeJSON(tail) && !sawAnyToken) {
-            try { onFinalJSON?.(JSON.parse(tail)); } catch {}
-          }
+  addMessage({ text: msg, sender: "user" });
+  input.value = "";
+  input.focus();
 
-          return { latencyMs: Math.round(performance.now() - started), streamed: true };
+  isSending = true;
+  sendBtn.disabled = true;
+  input.disabled = true;
 
-        } finally {
-          clearTimeout(timeoutId);
-        }
-      }
+  const typingIndicator = createTypingIndicator();
+  chatBox.appendChild(typingIndicator);
+  scrollToBottom();
 
-      let isSending = false;
+  try {
+    const sessionId = getOrCreateSessionId();
 
-      async function sendMessage() {
-        if (isSending) return;
+    // Create bot message in typing mode (we will append streamed chunks)
+    const botMsg = addMessage({
+      text: "",
+      sender: "bot",
+      metaPills: [{ label: "⏳ ...", cls: "" }],
+      typing: true
+    });
+    const t = botMsg.__typing;
 
-        const msg = input.value.trim();
-        if (!msg) return;
+    // chunk callback
+    const onChunk = (chunk) => {
+      t.rawText += chunk;
+      t.pre.textContent = t.rawText;
+      scrollToBottom();
+    };
 
-        addMessage({ text: msg, sender: "user" });
-        input.value = "";
-        input.focus();
+    const result = await postToN8nStreaming(msg, sessionId, onChunk);
 
-        const typingIndicator = createTypingIndicator();
-        chatBox.appendChild(typingIndicator);
-        scrollToBottom();
+    if (typingIndicator?.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
 
-        isSending = true;
-        sendBtn.disabled = true;
-        input.disabled = true;
+    // If server gave JSON, render it (no streaming)
+    if (result.mode === "json") {
+      const answer = extractAnswer(result.data);
+      t.rawText = answer || "پاسخ نامعتبر از سرور دریافت شد.";
+      t.pre.textContent = t.rawText;
+    }
 
-        try {
-          const sessionId = getOrCreateSessionId();
+    // set final pills
+    const pill =
+      result.latencyMs < 8000
+        ? { label: `⏱ ${result.latencyMs}ms`, cls: "ok" }
+        : { label: `⏱ ${Math.round(result.latencyMs / 1000)}s`, cls: "warn" };
 
-          let removedTypingIndicator = false;
-          const removeTyping = () => {
-            if (!removedTypingIndicator && typingIndicator && typingIndicator.parentNode) {
-              typingIndicator.parentNode.removeChild(typingIndicator);
-              removedTypingIndicator = true;
-            }
-          };
+    // Replace content with markdown-lite HTML at end
+    botMsg.querySelector(".message-text").innerHTML =
+      `<div class="rendered-answer">${renderMarkdownLiteToHTML(t.rawText)}</div>`;
 
-          const botMsg = addMessage({
-            text: "",
-            sender: "bot",
-            metaPills: [{ label: "Streaming...", cls: "ok" }, { label: timeHHMM(), cls: "" }],
-            streaming: true
-          });
+    // Update footer pills
+    const timeDiv = botMsg.querySelector(".message-time");
+    const modePill = result.mode === "stream"
+      ? { label: "✅ Stream", cls: "ok" }
+      : { label: "⚠️ JSON", cls: "warn" };
 
-          const stream = botMsg.__stream;
+    timeDiv.innerHTML = [pill, modePill, { label: timeHHMM(), cls: "" }]
+      .map(p => pillHTML(p.label, p.cls)).join(" ");
 
-          const { latencyMs, streamed } = await postToN8nStreaming({
-            msg,
-            sessionId,
-            onToken: (tok) => {
-              removeTyping();
-              stream.rawText += tok;
-              stream.pre.textContent = stream.rawText;
-              scrollToBottom();
-            },
-            onFinalJSON: (data) => {
-              removeTyping();
-              if (stream.rawText && stream.rawText.trim().length) return;
-              const ans = extractAnswer(data);
-              stream.rawText = ans || "پاسخ نامعتبر از سرور دریافت شد.";
-              stream.pre.textContent = stream.rawText;
-            }
-          });
-
-          removeTyping();
-
-          const pill = latencyMs < 8000
-            ? { label: `⏱ ${latencyMs}ms`, cls: "ok" }
-            : { label: `⏱ ${Math.round(latencyMs/1000)}s`, cls: "warn" };
-
-          const timeDiv = botMsg.querySelector(".message-time");
-          timeDiv.innerHTML = [
-            pillHTML(streamed ? "✅ Stream" : "⚠️ JSON", streamed ? "ok" : "warn"),
-            pillHTML(pill.label, pill.cls),
-            pillHTML(timeHHMM(), "")
-          ].join(" ");
-
-          stream.caret.textContent = "";
-          botMsg.querySelector(".message-text").innerHTML =
-            `<div class="rendered-answer">${renderMarkdownLiteToHTML(stream.rawText)}</div>`;
-
-        } catch (err) {
-          if (typingIndicator && typingIndicator.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
-          addMessage({ text: "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.", sender: "bot", metaPills: [{label:"Error", cls:"warn"}] });
-          console.error(err);
-        } finally {
-          isSending = false;
-          sendBtn.disabled = false;
-          input.disabled = false;
-        }
-      }
+  } catch (err) {
+    if (typingIndicator?.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
+    addMessage({
+      text: "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
+      sender: "bot",
+      metaPills: [{ label: "Error", cls: "warn" }]
+    });
+    console.error(err);
+  } finally {
+    isSending = false;
+    sendBtn.disabled = false;
+    input.disabled = false;
+  }
+}
 
       clearBtn.addEventListener("click", function () {
         if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
