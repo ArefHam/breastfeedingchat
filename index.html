@@ -622,44 +622,35 @@
           console.log("📥 Raw response (first 500 chars):", text.substring(0, 500));
           console.log("📏 Total response length:", text.length);
           
-          // Manual extraction: find each { and its matching }
-          const objects = [];
-          let i = 0;
-          
-          while (i < text.length) {
-            // Skip whitespace
-            while (i < text.length && /\s/.test(text[i])) i++;
-            
-            if (i >= text.length || text[i] !== '{') break;
-            
-            // Find matching closing brace
-            let depth = 0;
-            let start = i;
-            
-            while (i < text.length) {
-              if (text[i] === '{') depth++;
-              if (text[i] === '}') {
-                depth--;
-                if (depth === 0) {
-                  i++; // include the closing brace
-                  break;
-                }
-              }
-              i++;
-            }
-            
-            const jsonStr = text.substring(start, i);
-            objects.push(jsonStr);
+          // Extract JSON objects (supports raw NDJSON or SSE `data:` lines)
+          const jsonRegex = /{[\s\S]*?}/g;
+          const dataLineRegex = /data:\s*({[\s\S]*?})/g;
+
+          const rawObjects = [];
+
+          // Prefer SSE-style matches if present
+          let match;
+          while ((match = dataLineRegex.exec(text)) !== null) {
+            rawObjects.push(match[1]);
           }
-          
-          console.log(`📦 Extracted ${objects.length} JSON objects`);
-          
+
+          if (rawObjects.length === 0) {
+            while ((match = jsonRegex.exec(text)) !== null) {
+              rawObjects.push(match[0]);
+            }
+          }
+
+          console.log(`📦 Extracted ${rawObjects.length} JSON objects`);
+
           // Parse and process each object
-          for (let idx = 0; idx < objects.length; idx++) {
+          for (let idx = 0; idx < rawObjects.length; idx++) {
             try {
-              const parsed = JSON.parse(objects[idx]);
+              const trimmed = (rawObjects[idx] || "").trim();
+              if (!trimmed) continue;
+
+              const parsed = JSON.parse(trimmed);
               console.log(`✅ Object ${idx + 1}:`, parsed.type, parsed.content?.substring(0, 30));
-              
+
               if (parsed.type === "item" && parsed.content) {
                 onChunk(parsed.content);
               } else if (parsed.type === "end") {
@@ -667,7 +658,7 @@
                 break;
               }
             } catch (parseErr) {
-              console.error(`❌ Failed to parse object ${idx + 1}:`, objects[idx].substring(0, 100), parseErr);
+              console.error(`❌ Failed to parse object ${idx + 1}:`, rawObjects[idx]?.substring(0, 100), parseErr);
             }
           }
 
