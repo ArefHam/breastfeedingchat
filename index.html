@@ -25,7 +25,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
 
-    /* ✅ Body Background */
+    /* ✅ stop whole-page scroll; only chat scrolls */
     body {
       font-family: 'Vazirmatn', sans-serif;
       direction: rtl;
@@ -85,7 +85,7 @@
       z-index: 0;
     }
 
-    /* ✅ Sticky Header */
+    /* ✅ Sticky header + quick actions */
     .sticky-top {
       position: sticky;
       top: 0;
@@ -152,7 +152,7 @@
     .quick-btn i{ color: rgba(168,85,247,0.95); }
     .quick-btn:hover { transform: translateY(-2px); border-color: rgba(168,85,247,0.45); }
 
-    /* ✅ Chat Area */
+    /* ✅ ONLY this scrolls */
     .chat-box {
       position: relative;
       z-index: 1;
@@ -170,9 +170,11 @@
       gap: 14px;
       scroll-behavior: smooth;
     }
+
     .chat-box::-webkit-scrollbar { width: 10px; }
     .chat-box::-webkit-scrollbar-track { background: rgba(233,213,255,0.25); border-radius: 999px; }
     .chat-box::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.45); border-radius: 999px; }
+    .chat-box::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.65); }
 
     .welcome-message {
       background:
@@ -197,7 +199,6 @@
     }
     .welcome-text { color: #4b5563; line-height: 1.85; font-size: 15px; }
 
-    /* ✅ Messages */
     .message {
       margin: 5px 0;
       padding: 14px 16px;
@@ -209,7 +210,10 @@
       animation: fadeIn 0.25s ease-in-out;
       border: 1px solid transparent;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     .user-message {
       background:
@@ -264,10 +268,17 @@
       border: 1px solid rgba(221,214,254,0.9);
     }
 
-    .message-text { font-size: 16px; line-height: 1.95; word-break: break-word; letter-spacing: 0.1px; }
+    .message-text {
+      font-size: 16px;
+      line-height: 1.95;
+      word-break: break-word;
+      letter-spacing: 0.1px;
+    }
     .message-text strong{ font-weight: 800; }
+
     .msg-rtl { direction: rtl; text-align: right; }
     .msg-ltr { direction: ltr; text-align: left; }
+
     .rendered-answer { unicode-bidi: plaintext; white-space: pre-wrap; overflow-wrap: anywhere; }
 
     .typing-caret {
@@ -433,7 +444,7 @@
     </div>
   </div>
 
-<script>
+  <script>
     document.addEventListener("DOMContentLoaded", function () {
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
@@ -442,159 +453,324 @@
       const input = document.getElementById("user-input");
       const quickButtons = document.querySelectorAll(".quick-btn");
       const chatBox = document.getElementById("chat-box");
+
       let isSending = false;
 
       // --- Helpers ---
-      function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
-      function escapeHTML(str) { return String(str).replace(/[&<>"'`=\/]/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[s]); }
-      function renderMarkdownLiteToHTML(rawText) { return rawText ? escapeHTML(rawText).replace(/\n/g, "<br>") : ""; }
-      function detectDir(text) { return /[\u0600-\u06FF]/.test(text) ? "rtl" : "ltr"; }
-      function timeHHMM() { const d = new Date(); return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`; }
-      
+      function scrollToBottom(force = false) {
+        // Only autoscroll if user is already near bottom, OR forced (when user sends)
+        const threshold = 160;
+        const atBottom = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < threshold;
+        if (force || atBottom) chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      function escapeHTML(str) {
+        return String(str).replace(/[&<>"']/g, (s) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        }[s]));
+      }
+
+      // Markdown-lite: **bold** + line breaks
+      function renderMarkdownLiteToHTML(rawText) {
+        const text = (rawText == null) ? "" : String(rawText);
+        let safe = escapeHTML(text);
+        safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        safe = safe.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
+        return safe;
+      }
+
+      // Better RTL/LTR detector (handles Arabic + Persian + Hebrew ranges)
+      function detectDir(text) {
+        const s = (text == null) ? "" : String(text);
+        const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+        const ltrRe = /[A-Za-z]/;
+        for (const ch of s) {
+          if (/\s/.test(ch)) continue;
+          if (rtlRe.test(ch)) return "rtl";
+          if (ltrRe.test(ch)) return "ltr";
+        }
+        return document.documentElement.dir || "rtl";
+      }
+
+      function timeHHMM() {
+        const d = new Date();
+        return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+      }
+
       function getOrCreateSessionId() {
         let s = localStorage.getItem("eveai_sessionId");
-        if (!s) { s = Date.now().toString(); localStorage.setItem("eveai_sessionId", s); }
+        if (!s) {
+          s = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + "_" + Math.random().toString(16).slice(2));
+          localStorage.setItem("eveai_sessionId", s);
+        }
         return s;
       }
 
+      // --- UI: messages ---
       function addMessage({ text, sender, typing = false }) {
         const container = document.createElement("div");
         container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
+
         const msgText = document.createElement("div");
         msgText.className = "message-text";
 
         if (sender === "user") {
-          msgText.textContent = text;
+          msgText.textContent = (text == null) ? "" : String(text);
           container.classList.add("msg-rtl");
+          container.appendChild(msgText);
         } else {
-          container.classList.add(detectDir(text) === "ltr" ? "msg-ltr" : "msg-rtl");
+          const dir = detectDir(text);
+          container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
+
+          // We'll stream into this element
           const pre = document.createElement("div");
           pre.className = "rendered-answer";
-          pre.textContent = text;
+          pre.style.whiteSpace = "pre-wrap";
+          pre.style.unicodeBidi = "plaintext";
+          pre.style.overflowWrap = "anywhere";
+          pre.innerHTML = renderMarkdownLiteToHTML(text || "");
+
           msgText.appendChild(pre);
+
+          let caret = null;
           if (typing) {
-             const caret = document.createElement("span");
-             caret.className = "typing-caret";
-             caret.textContent = "▍";
-             msgText.appendChild(caret);
-             container.__typing = { pre, caret, rawText: text || "" };
+            caret = document.createElement("span");
+            caret.className = "typing-caret";
+            caret.textContent = "▍";
+            msgText.appendChild(caret);
           }
+
+          container.appendChild(msgText);
+
+          // keep refs for streaming updates
+          container.__typing = { pre, caret, rawText: String(text || "") };
         }
+
         const timeDiv = document.createElement("div");
         timeDiv.className = "message-time";
         timeDiv.textContent = timeHHMM();
-        container.appendChild(msgText);
         container.appendChild(timeDiv);
+
         chatBox.appendChild(container);
-        scrollToBottom();
+        scrollToBottom(true);
         return container;
       }
 
+      // --- Streaming parser for n8n Webhook streaming (JSON objects) ---
+      // n8n streams multiple JSON objects back-to-back:
+      // {"type":"begin",...}{"type":"item","content":"Hi"}{"type":"end",...}
+      // We must safely extract complete JSON objects even when chunk boundaries split them.
+      function extractJsonObjectsFromBuffer(buffer) {
+        const objects = [];
+        let inStr = false, esc = false;
+        let depth = 0;
+        let start = -1;
+
+        for (let i = 0; i < buffer.length; i++) {
+          const ch = buffer[i];
+
+          if (inStr) {
+            if (esc) {
+              esc = false;
+            } else if (ch === "\\") {
+              esc = true;
+            } else if (ch === '"') {
+              inStr = false;
+            }
+            continue;
+          } else {
+            if (ch === '"') {
+              inStr = true;
+              continue;
+            }
+            if (ch === "{") {
+              if (depth === 0) start = i;
+              depth++;
+              continue;
+            }
+            if (ch === "}") {
+              if (depth > 0) depth--;
+              if (depth === 0 && start !== -1) {
+                const jsonStr = buffer.slice(start, i + 1);
+                objects.push(jsonStr);
+                start = -1;
+              }
+            }
+          }
+        }
+
+        // remainder (incomplete JSON) = from start if we are inside an object
+        const remainder = (depth !== 0 && start !== -1) ? buffer.slice(start) : "";
+        // consumed part = buffer minus remainder, but careful if depth==0 remainder empty => consumed all
+        const consumedLength = buffer.length - remainder.length;
+        const rest = buffer.slice(consumedLength);
+
+        return { objects, rest };
+      }
+
+      async function streamFromN8n({ msg, sessionId, onToken, onDone }) {
+        const res = await fetch(N8N_WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ msg, sessionId }),
+          cache: "no-store"
+        });
+
+        if (!res.ok) {
+          const t = await res.text().catch(() => "");
+          throw new Error(`HTTP ${res.status} ${res.statusText} :: ${t.slice(0, 200)}`);
+        }
+
+        if (!res.body) {
+          // not stream-capable response body (shouldn't happen in modern browsers)
+          const t = await res.text().catch(() => "");
+          if (t) onToken(t);
+          onDone();
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Some servers may include whitespace/newlines; OK
+          const { objects, rest } = extractJsonObjectsFromBuffer(buffer);
+          buffer = rest;
+
+          for (const jsonStr of objects) {
+            let obj;
+            try { obj = JSON.parse(jsonStr); }
+            catch { continue; }
+
+            if (obj && obj.type === "item" && typeof obj.content === "string") {
+              if (obj.content) onToken(obj.content);
+            }
+
+            if (obj && obj.type === "end") {
+              onDone();
+              return;
+            }
+          }
+        }
+
+        // flush any remaining (rare). Try one last parse if it looks complete.
+        if (buffer && buffer.trim().startsWith("{") && buffer.trim().endsWith("}")) {
+          try {
+            const obj = JSON.parse(buffer.trim());
+            if (obj?.type === "item" && typeof obj.content === "string") onToken(obj.content);
+          } catch {}
+        }
+
+        onDone();
+      }
+
+      // --- Main send logic ---
       async function sendMessage() {
         if (isSending) return;
+
         const msg = input.value.trim();
         if (!msg) return;
 
         isSending = true;
         input.value = "";
-        input.disabled = true; 
+        input.disabled = true;
         sendBtn.disabled = true;
 
         addMessage({ text: msg, sender: "user" });
+
         const botMsg = addMessage({ text: "", sender: "bot", typing: true });
-        const typingState = botMsg.__typing;
+        const t = botMsg.__typing;
+
+        // While streaming, keep direction stable based on first non-space token
+        let dirLocked = false;
 
         try {
-          const response = await fetch(N8N_WEBHOOK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ msg, sessionId: getOrCreateSessionId() })
+          const sessionId = getOrCreateSessionId();
+
+          await streamFromN8n({
+            msg,
+            sessionId,
+            onToken: (token) => {
+              // lock direction once meaningful text appears
+              if (!dirLocked && token && token.trim()) {
+                const dir = detectDir(token);
+                botMsg.classList.remove("msg-rtl", "msg-ltr");
+                botMsg.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
+                dirLocked = true;
+              }
+
+              t.rawText += token;
+
+              // Render progressively (safe)
+              t.pre.innerHTML = renderMarkdownLiteToHTML(t.rawText);
+
+              // Smooth autoscroll only if user near bottom
+              scrollToBottom(false);
+            },
+            onDone: () => {}
           });
 
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
+          if (t.caret) t.caret.remove();
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-                // Process any remaining buffer at the end
-                if(buffer.trim()) processLine(buffer);
-                break;
-            }
+          // Final render (in case last token includes newlines etc.)
+          t.pre.innerHTML = renderMarkdownLiteToHTML(t.rawText);
 
-            buffer += decoder.decode(value, { stream: true });
-            
-            // ✅ Fix: Regex to separate stuck JSON objects like "}{" -> "}\n{"
-            buffer = buffer.replace(/\}\s*\{/g, '}\n{');
-
-            const lines = buffer.split("\n");
-            
-            // ✅ IMPORTANT: Reset buffer and try to process everything.
-            // If the last line fails to parse, ONLY THEN we put it back in buffer.
-            buffer = ""; 
-
-            for (let i = 0; i < lines.length; i++) {
-              const line = lines[i];
-              if (!line.trim()) continue;
-
-              // Helper to attempt parsing
-              const success = processLine(line);
-              
-              if (!success && i === lines.length - 1) {
-                // If the LAST line failed, it's likely incomplete. Save it for next chunk.
-                buffer = line;
-              }
-            }
+          // If no content arrived, show a gentle error line
+          if (!t.rawText.trim()) {
+            t.pre.innerHTML = "پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.";
           }
-
-          function processLine(line) {
-             try {
-                // Remove "data:" prefix if it exists (legacy support)
-                let clean = line.trim();
-                if (clean.startsWith("data:")) clean = clean.replace("data:", "").trim();
-                if (clean === "[DONE]") return true;
-
-                const json = JSON.parse(clean);
-
-                // Handle n8n specific formats
-                const chunk = json.content || json.output || json.token || ""; 
-                if (chunk) {
-                  typingState.rawText += chunk;
-                  typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
-                  scrollToBottom();
-                }
-                return true; // Success
-             } catch (e) {
-                return false; // Failed to parse (incomplete line)
-             }
-          }
-
-          typingState.caret.remove();
         } catch (error) {
           console.error("Chat Error:", error);
-          typingState.caret.remove();
-          // Only show error if we haven't received ANY text yet
-          if (!typingState.rawText) {
-             typingState.pre.textContent += "\n[خطا در ارتباط. لطفاً دوباره تلاش کنید]";
+          if (t.caret) t.caret.remove();
+
+          if (!t.rawText.trim()) {
+            t.pre.innerHTML = "خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.";
+          } else {
+            // If we already have partial text, keep it and add a small notice
+            t.pre.innerHTML = renderMarkdownLiteToHTML(t.rawText + "\n\n[ارتباط قطع شد — اگر لازم بود دوباره ارسال کنید]");
           }
         } finally {
           isSending = false;
           input.disabled = false;
           sendBtn.disabled = false;
           input.focus();
+          scrollToBottom(false);
         }
       }
 
+      // --- Events ---
       sendBtn.addEventListener("click", sendMessage);
-      input.addEventListener("keydown", (e) => e.key === "Enter" && sendMessage());
-      clearBtn.addEventListener("click", () => { 
-        if(confirm("پاک کردن؟")) { chatBox.innerHTML = ""; localStorage.removeItem("eveai_sessionId"); }
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendMessage();
       });
-      quickButtons.forEach(btn => btn.addEventListener("click", () => {
-         input.value = btn.getAttribute("data-question"); sendMessage();
-      }));
+
+      clearBtn.addEventListener("click", () => {
+        if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
+        // keep welcome message? your choice. Here we keep it removed for a clean reset.
+        chatBox.innerHTML = "";
+        localStorage.removeItem("eveai_sessionId");
+      });
+
+      quickButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          input.value = btn.getAttribute("data-question") || "";
+          sendMessage();
+        });
+      });
     });
-</script>
+  </script>
 </body>
 </html>
