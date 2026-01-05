@@ -485,6 +485,7 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+      // ✅ YOUR n8n WEBHOOK URL
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
       const sendBtn = document.getElementById("send-btn");
@@ -494,11 +495,13 @@
       const chatBox = document.getElementById("chat-box");
       let isSending = false;
 
+      // --- Helpers ---
       function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
       function escapeHTML(str) { return String(str).replace(/[&<>"'`=\/]/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[s]); }
       function renderMarkdownLiteToHTML(rawText) { return rawText ? escapeHTML(rawText).replace(/\n/g, "<br>") : ""; }
       function detectDir(text) { return /[\u0600-\u06FF]/.test(text) ? "rtl" : "ltr"; }
       function timeHHMM() { const d = new Date(); return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`; }
+      
       function getOrCreateSessionId() {
         let s = localStorage.getItem("eveai_sessionId");
         if (!s) { s = Date.now().toString(); localStorage.setItem("eveai_sessionId", s); }
@@ -568,29 +571,27 @@
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
+            
+            // Split by newline to handle NDJSON
             const lines = buffer.split("\n");
-            buffer = lines.pop(); // Keep incomplete line
+            buffer = lines.pop(); // Keep incomplete line in buffer
 
             for (const line of lines) {
               const trimmed = line.trim();
               if (!trimmed) continue;
-              
-              // UNIVERSAL PARSER: Handles both "data: {...}" (SSE) and raw "{...}" (NDJSON)
-              let jsonStr = trimmed;
-              if (trimmed.startsWith("data:")) jsonStr = trimmed.replace("data:", "").trim();
-              if (jsonStr === "[DONE]") continue;
 
               try {
-                const json = JSON.parse(jsonStr);
-                // Extract content from any n8n format
-                const chunk = json.content || json.output || json.token || ""; 
-                if (chunk) {
-                  typingState.rawText += chunk;
+                // ✅ PARSER FIX: Directly parse the JSON line
+                const json = JSON.parse(trimmed);
+
+                // Handle the exact format from your logs: {"type": "item", "content": "..."}
+                if (json.type === "item" && json.content) {
+                  typingState.rawText += json.content;
                   typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
                   scrollToBottom();
                 }
               } catch (e) {
-                // Skip invalid JSON lines
+                console.warn("Skipping non-JSON line:", trimmed);
               }
             }
           }
