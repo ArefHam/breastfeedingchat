@@ -9,33 +9,20 @@
 
   <style>
     :root{
-      --bg1:#fff7fb;
-      --bg2:#f1f7ff;
-      --card:#ffffff;
-      --ink:#1f2937;
-      --muted:#6b7280;
-      --p1:#a855f7;
-      --p2:#8b5cf6;
-      --p3:#ec4899;
-      --line:#efe6ff;
-      --soft:#faf7ff;
+      --bg1:#fff7fb; --bg2:#f1f7ff; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
+      --p1:#a855f7; --p2:#8b5cf6; --p3:#ec4899; --line:#efe6ff; --soft:#faf7ff;
       --shadow: 0 18px 55px rgba(88, 28, 135, 0.14);
       --shadow2: 0 10px 25px rgba(17, 24, 39, 0.06);
-      --r-lg:22px;
-      --r-md:16px;
-      --r-sm:12px;
+      --r-lg:22px; --r-md:16px; --r-sm:12px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     body {
-      font-family: 'Vazirmatn', sans-serif;
-      direction: rtl;
-      color: var(--ink);
-      background:
-        radial-gradient(1200px 600px at 20% -10%, rgba(168,85,247,0.22), transparent 60%),
-        radial-gradient(1000px 500px at 90% 0%, rgba(34,197,94,0.10), transparent 55%),
-        radial-gradient(1100px 600px at 60% 110%, rgba(236,72,153,0.12), transparent 60%),
-        linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+      font-family: 'Vazirmatn', sans-serif; direction: rtl; color: var(--ink);
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(168,85,247,0.22), transparent 60%),
+                  radial-gradient(1000px 500px at 90% 0%, rgba(34,197,94,0.10), transparent 55%),
+                  radial-gradient(1100px 600px at 60% 110%, rgba(236,72,153,0.12), transparent 60%),
+                  linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
       overflow-x: hidden;
     }
     ::selection{ background: rgba(168,85,247,0.25); }
@@ -48,211 +35,110 @@
     }
 
     .chat-container {
-      width: 920px;
-      max-width: 95%;
-      margin: 22px auto;
-      background: rgba(255,255,255,0.80);
-      backdrop-filter: blur(10px);
-      border-radius: var(--r-lg);
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      border: 1px solid rgba(239,230,255,0.9);
-      min-height: 90vh;
-      position: relative;
+      width: 920px; max-width: 95%; margin: 22px auto;
+      background: rgba(255,255,255,0.80); backdrop-filter: blur(10px);
+      border-radius: var(--r-lg); box-shadow: var(--shadow);
+      display: flex; flex-direction: column; overflow: hidden;
+      border: 1px solid rgba(239,230,255,0.9); min-height: 90vh; position: relative;
     }
 
     .chat-container::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
+      content:""; position:absolute; inset:0; pointer-events:none;
       background: linear-gradient(180deg, rgba(168,85,247,0.10), transparent 22%, transparent 78%, rgba(34,197,94,0.06));
       opacity: 0.8;
     }
 
     .chat-header {
-      background:
-        radial-gradient(700px 180px at 30% 20%, rgba(255,255,255,0.18), transparent 60%),
-        linear-gradient(135deg, var(--p1) 0%, var(--p2) 45%, rgba(34,197,94,0.18) 140%);
-      color: #fff;
-      padding: 18px 18px 16px;
-      text-align: center;
-      font-family: 'Lalezar', cursive;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      z-index: 1;
+      background: radial-gradient(700px 180px at 30% 20%, rgba(255,255,255,0.18), transparent 60%),
+                  linear-gradient(135deg, var(--p1) 0%, var(--p2) 45%, rgba(34,197,94,0.18) 140%);
+      color: #fff; padding: 18px 18px 16px; text-align: center;
+      font-family: 'Lalezar', cursive; position: relative;
+      display: flex; align-items: center; justify-content: center; gap: 14px; z-index: 1;
       border-bottom: 1px solid rgba(255,255,255,0.12);
     }
     .chat-header::after{
-      content:"";
-      position:absolute;
-      bottom:0; left:0; right:0;
-      height: 1px;
+      content:""; position:absolute; bottom:0; left:0; right:0; height: 1px;
       background: linear-gradient(to left, rgba(255,255,255,0.35), rgba(255,255,255,0.08), rgba(255,255,255,0.35));
       opacity: 0.9;
     }
-    .chat-header i {
-      font-size: 26px;
-      opacity: 0.95;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));
-    }
+    .chat-header i { font-size: 26px; opacity: 0.95; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12)); }
     .chat-header > div{ line-height: 1.2; }
     .chat-header > div:first-child{ font-size: 26px; letter-spacing: 0.2px; }
     .header-subtitle {
-      font-size: 14px;
-      font-weight: 400;
-      margin-top: 6px;
-      opacity: 0.92;
+      font-size: 14px; font-weight: 400; margin-top: 6px; opacity: 0.92;
       font-family: 'Vazirmatn', sans-serif;
     }
 
     .quick-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 12px 14px 8px;
-      background: rgba(252,250,255,0.92);
-      border-bottom: 1px solid rgba(239,230,255,0.8);
-      z-index: 1;
+      display: flex; flex-wrap: wrap; gap: 10px; padding: 12px 14px 8px;
+      background: rgba(252,250,255,0.92); border-bottom: 1px solid rgba(239,230,255,0.8); z-index: 1;
     }
     .quick-btn {
       padding: 10px 14px;
-      background:
-        radial-gradient(240px 100px at 20% 20%, rgba(255,255,255,0.60), transparent 60%),
-        linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(237,233,254,0.92) 55%, rgba(240,249,255,0.75) 120%);
-      border: 1px solid rgba(221,214,254,0.75);
-      border-radius: 999px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #5b21b6;
-      transition: 0.18s ease;
-      font-family: 'Vazirmatn', sans-serif;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      background: radial-gradient(240px 100px at 20% 20%, rgba(255,255,255,0.60), transparent 60%),
+                  linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(237,233,254,0.92) 55%, rgba(240,249,255,0.75) 120%);
+      border: 1px solid rgba(221,214,254,0.75); border-radius: 999px; cursor: pointer;
+      font-size: 14px; color: #5b21b6; transition: 0.18s ease;
+      font-family: 'Vazirmatn', sans-serif; display: inline-flex; align-items: center; gap: 8px;
       box-shadow: 0 10px 18px rgba(17,24,39,0.05);
     }
     .quick-btn i{ color: rgba(168,85,247,0.95); }
     .quick-btn:hover { transform: translateY(-2px); border-color: rgba(168,85,247,0.45); }
 
     .chat-box {
-      flex: 1;
-      height: 520px;
-      overflow-y: auto;
-      padding: 20px 16px 22px 18px;
-      background:
-        radial-gradient(700px 260px at 80% 0%, rgba(168,85,247,0.08), transparent 60%),
-        radial-gradient(700px 260px at 10% 100%, rgba(34,197,94,0.06), transparent 60%),
-        var(--soft);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      overflow-x: hidden;
-      z-index: 1;
+      flex: 1; height: 520px; overflow-y: auto; padding: 20px 16px 22px 18px;
+      background: radial-gradient(700px 260px at 80% 0%, rgba(168,85,247,0.08), transparent 60%),
+                  radial-gradient(700px 260px at 10% 100%, rgba(34,197,94,0.06), transparent 60%),
+                  var(--soft);
+      display: flex; flex-direction: column; gap: 14px; overflow-x: hidden; z-index: 1;
     }
 
     .welcome-message {
-      background:
-        radial-gradient(500px 200px at 20% 0%, rgba(168,85,247,0.14), transparent 60%),
-        linear-gradient(135deg, #eef2ff 0%, #fff1fb 60%, #f5fffb 140%);
-      padding: 18px 18px;
-      border-radius: var(--r-md);
-      margin-bottom: 12px;
-      border-right: 6px solid var(--p1);
-      text-align: center;
-      box-shadow: var(--shadow2);
+      background: radial-gradient(500px 200px at 20% 0%, rgba(168,85,247,0.14), transparent 60%),
+                  linear-gradient(135deg, #eef2ff 0%, #fff1fb 60%, #f5fffb 140%);
+      padding: 18px 18px; border-radius: var(--r-md); margin-bottom: 12px;
+      border-right: 6px solid var(--p1); text-align: center; box-shadow: var(--shadow2);
     }
     .welcome-title {
-      font-size: 20px;
-      color: #6d28d9;
-      margin-bottom: 10px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+      font-size: 20px; color: #6d28d9; margin-bottom: 10px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
     }
     .welcome-text { color: #4b5563; line-height: 1.85; font-size: 15px; }
 
     .message {
-      margin: 5px 0;
-      padding: 14px 16px;
-      border-radius: 18px;
-      max-width: 78%;
-      word-wrap: break-word;
-      box-shadow: 0 10px 24px rgba(17,24,39,0.06);
-      position: relative;
-      animation: fadeIn 0.25s ease-in-out;
-      border: 1px solid transparent;
+      margin: 5px 0; padding: 14px 16px; border-radius: 18px; max-width: 78%;
+      word-wrap: break-word; box-shadow: 0 10px 24px rgba(17,24,39,0.06);
+      position: relative; animation: fadeIn 0.25s ease-in-out; border: 1px solid transparent;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     .user-message {
-      background:
-        radial-gradient(400px 140px at 30% 20%, rgba(255,255,255,0.18), transparent 60%),
-        linear-gradient(135deg, var(--p1) 0%, var(--p2) 80%);
-      color: white;
-      margin-left: auto;
-      border-bottom-right-radius: 6px;
-      text-align: right;
-      margin-right: 44px;
-      border: 1px solid rgba(255,255,255,0.12);
+      background: radial-gradient(400px 140px at 30% 20%, rgba(255,255,255,0.18), transparent 60%),
+                  linear-gradient(135deg, var(--p1) 0%, var(--p2) 80%);
+      color: white; margin-left: auto; border-bottom-right-radius: 6px;
+      text-align: right; margin-right: 44px; border: 1px solid rgba(255,255,255,0.12);
     }
     .bot-message {
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(233,213,255,0.95);
-      margin-right: auto;
-      border-bottom-left-radius: 6px;
-      margin-left: 44px;
+      background: rgba(255,255,255,0.92); border: 1px solid rgba(233,213,255,0.95);
+      margin-right: auto; border-bottom-left-radius: 6px; margin-left: 44px;
       box-shadow: 0 12px 28px rgba(88, 28, 135, 0.08);
     }
 
     .bot-message::before {
-      content: "🤱";
-      position: absolute;
-      left: -48px;
-      top: 14px;
-      font-size: 21px;
-      background: rgba(243,232,255,0.95);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 20px rgba(168,85,247,0.14);
-      border: 1px solid rgba(233,213,255,0.9);
+      content: "🤱"; position: absolute; left: -48px; top: 14px; font-size: 21px;
+      background: rgba(243,232,255,0.95); width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 10px 20px rgba(168,85,247,0.14); border: 1px solid rgba(233,213,255,0.9);
     }
     .user-message::after {
-      content: "💬";
-      position: absolute;
-      right: -48px;
-      top: 14px;
-      font-size: 21px;
-      background: rgba(237,233,254,0.95);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 20px rgba(139,92,246,0.16);
-      border: 1px solid rgba(221,214,254,0.9);
+      content: "💬"; position: absolute; right: -48px; top: 14px; font-size: 21px;
+      background: rgba(237,233,254,0.95); width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 10px 20px rgba(139,92,246,0.16); border: 1px solid rgba(221,214,254,0.9);
     }
 
     .message-text {
-      font-size: 16px;
-      line-height: 1.95;
-      word-break: break-word;
-      letter-spacing: 0.1px;
+      font-size: 16px; line-height: 1.95; word-break: break-word; letter-spacing: 0.1px;
     }
     .message-text strong{ font-weight: 800; }
 
@@ -260,80 +146,46 @@
     .msg-ltr { direction: ltr; text-align: left; }
 
     .typing-caret {
-      display: inline-block;
-      width: 10px;
-      margin-inline-start: 2px;
-      opacity: 0.9;
-      animation: caretBlink 0.9s infinite;
-      color: rgba(109,40,217,0.95);
-      font-weight: 800;
+      display: inline-block; width: 10px; margin-inline-start: 2px; opacity: 0.9;
+      animation: caretBlink 0.9s infinite; color: rgba(109,40,217,0.95); font-weight: 800;
     }
     @keyframes caretBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
 
     .message-time {
-      font-size: 12px;
-      opacity: 0.75;
-      margin-top: 9px;
-      color: rgba(75,85,99,0.8);
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      font-size: 12px; opacity: 0.75; margin-top: 9px; color: rgba(75,85,99,0.8);
+      display: flex; align-items: center; gap: 10px;
     }
     .user-message .message-time { color: rgba(255,255,255,0.92); justify-content: flex-start; }
     .bot-message .message-time  { justify-content: flex-end; }
 
     .pill {
-      font-size: 11px;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(233,213,255,0.9);
-      background: rgba(243,232,255,0.7);
-      color: #6d28d9;
+      font-size: 11px; padding: 5px 10px; border-radius: 999px;
+      border: 1px solid rgba(233,213,255,0.9); background: rgba(243,232,255,0.7); color: #6d28d9;
     }
     .pill.ok { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.10); color: #166534; }
     .pill.warn { border-color: rgba(249,115,22,0.25); background: rgba(249,115,22,0.10); color: #9a3412; }
 
     .input-area {
-      display: flex;
-      gap: 10px;
-      padding: 16px 16px 18px;
+      display: flex; gap: 10px; padding: 16px 16px 18px;
       border-top: 1px solid rgba(239,230,255,0.95);
       background: linear-gradient(180deg, rgba(252,250,255,0.96) 0%, rgba(250,247,255,0.92) 100%);
       z-index: 1;
     }
     input {
-      flex: 1;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(221,221,221,0.9);
-      font-size: 16px;
-      font-family: 'Vazirmatn', sans-serif;
-      transition: all 0.25s;
-      background: rgba(255,255,255,0.95);
-      box-shadow: 0 8px 18px rgba(17,24,39,0.04);
+      flex: 1; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(221,221,221,0.9);
+      font-size: 16px; font-family: 'Vazirmatn', sans-serif; transition: all 0.25s;
+      background: rgba(255,255,255,0.95); box-shadow: 0 8px 18px rgba(17,24,39,0.04);
     }
     input:focus {
-      outline: none;
-      border-color: rgba(168,85,247,0.75);
-      box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.18);
-      transform: translateY(-1px);
+      outline: none; border-color: rgba(168,85,247,0.75);
+      box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.18); transform: translateY(-1px);
     }
 
     button {
-      padding: 14px 18px;
-      border: none;
-      border-radius: 14px;
-      cursor: pointer;
-      font-size: 15px;
-      transition: 0.22s ease;
-      font-family: 'Vazirmatn', sans-serif;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 10px 22px rgba(17,24,39,0.07);
-      user-select: none;
+      padding: 14px 18px; border: none; border-radius: 14px; cursor: pointer; font-size: 15px;
+      transition: 0.22s ease; font-family: 'Vazirmatn', sans-serif; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 10px 22px rgba(17,24,39,0.07); user-select: none;
     }
     button#send-btn {
       background: radial-gradient(300px 120px at 20% 20%, rgba(255,255,255,0.18), transparent 60%),
@@ -347,43 +199,27 @@
       color: #fff;
     }
     button#clear-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(249, 115, 22, 0.22); }
-    button:disabled{ opacity: 0.6; cursor: not-allowed; transform: none !important; filter: none !important; box-shadow: none !important; }
+    button:disabled{ opacity: 0.6; cursor: not-allowed; transform: none !important; }
 
     .footer-info {
-      text-align: center;
-      padding: 13px 16px;
-      font-size: 13px;
-      color: rgba(75,85,99,0.9);
+      text-align: center; padding: 13px 16px; font-size: 13px; color: rgba(75,85,99,0.9);
       background: linear-gradient(180deg, rgba(248,245,255,0.95) 0%, rgba(255,255,255,0.90) 100%);
       border-top: 1px solid rgba(239,230,255,0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-      z-index: 1;
+      display: flex; justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap; z-index: 1;
     }
     .footer-info i { color: rgba(168,85,247,0.95); }
 
     .typing-indicator {
-      display: flex;
-      padding: 14px 14px;
+      display: flex; padding: 14px 14px;
       background: linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(240,249,255,0.88) 100%);
-      border: 1px solid rgba(233,213,255,0.9);
-      border-radius: 18px;
-      width: fit-content;
-      margin-right: auto;
-      margin-left: 44px;
-      align-items: center;
-      gap: 10px;
-      min-width: 160px;
+      border: 1px solid rgba(233,213,255,0.9); border-radius: 18px; width: fit-content;
+      margin-right: auto; margin-left: 44px; align-items: center; gap: 10px; min-width: 160px;
       box-shadow: 0 12px 22px rgba(88, 28, 135, 0.08);
     }
     .typing-text { color: #6d28d9; font-size: 14px; font-weight: 600; }
     .typing-dots { display: flex; gap: 6px; }
     .typing-dots span {
-      width: 8px; height: 8px;
-      border-radius: 50%;
+      width: 8px; height: 8px; border-radius: 50%;
       background: linear-gradient(180deg, rgba(168,85,247,0.95), rgba(139,92,246,0.9));
       animation: dots 1.4s infinite ease-in-out;
     }
@@ -394,11 +230,9 @@
     @media (max-width: 768px) {
       .chat-container { margin: 10px auto; border-radius: 18px; }
       .chat-box { height: 450px; padding: 14px 10px 18px 12px; }
-      .message { max-width: 88%; margin-right: 0 !important; margin-left: 0 !important; }
+      .message { max-width: 88%; }
       .input-area { flex-direction: column; padding: 14px; }
       button { width: 100%; }
-      .quick-actions { justify-content: center; }
-      .footer-info { flex-direction: column; gap: 10px; }
     }
   </style>
 </head>
@@ -451,197 +285,195 @@
   </div>
 
   <script>
-    (function() {
-      'use strict';
+    console.log("🚀 NEW VERSION LOADED - Using ReadableStream");
+    
+    const N8N_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
+    const chatBox = document.getElementById("chat-box");
+    const sendBtn = document.getElementById("send-btn");
+    const clearBtn = document.getElementById("clear-btn");
+    const input = document.getElementById("user-input");
+
+    function scroll() { chatBox.scrollTop = chatBox.scrollHeight; }
+    function time() {
+      const t = new Date();
+      return `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    }
+    function detectDir(text) {
+      for (const ch of text || "") {
+        if (/\s/.test(ch)) continue;
+        if (/[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/.test(ch)) return "rtl";
+        if (/[A-Za-z]/.test(ch)) return "ltr";
+      }
+      return "rtl";
+    }
+    function getSessionId() {
+      let id = localStorage.getItem("eveai_sessionId");
+      if (!id) {
+        id = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+        localStorage.setItem("eveai_sessionId", id);
+      }
+      return id;
+    }
+
+    function addUserMsg(text) {
+      const div = document.createElement("div");
+      div.className = "message user-message msg-rtl";
+      div.innerHTML = `<div class="message-text">${text}</div><div class="message-time">${time()}</div>`;
+      chatBox.appendChild(div);
+      scroll();
+    }
+
+    function createBotMsg() {
+      const div = document.createElement("div");
+      div.className = "message bot-message";
       
-      console.log("🚀 Script loaded - Version 2.0");
+      const msgText = document.createElement("div");
+      msgText.className = "message-text";
+      msgText.style.whiteSpace = "pre-wrap";
       
-      const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
-      const chatBox = document.getElementById("chat-box");
-      const sendBtn = document.getElementById("send-btn");
-      const clearBtn = document.getElementById("clear-btn");
-      const input = document.getElementById("user-input");
-      const quickButtons = document.querySelectorAll(".quick-btn");
-
-      function scrollToBottom() { 
-        chatBox.scrollTop = chatBox.scrollHeight; 
-      }
-
-      function timeHHMM() {
-        const t = new Date();
-        return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`;
-      }
-
-      function detectDir(text) {
-        const s = String(text || "");
-        const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-        const ltrRe = /[A-Za-z]/;
-        for (const ch of s) {
-          if (/\s/.test(ch)) continue;
-          if (rtlRe.test(ch)) return "rtl";
-          if (ltrRe.test(ch)) return "ltr";
+      const caret = document.createElement("span");
+      caret.className = "typing-caret";
+      caret.textContent = "▍";
+      msgText.appendChild(caret);
+      
+      div.appendChild(msgText);
+      
+      const timeDiv = document.createElement("div");
+      timeDiv.className = "message-time";
+      div.appendChild(timeDiv);
+      
+      chatBox.appendChild(div);
+      scroll();
+      
+      return {
+        div,
+        msgText,
+        caret,
+        timeDiv,
+        append(text) {
+          const node = document.createTextNode(text);
+          this.msgText.insertBefore(node, this.caret);
+          scroll();
+        },
+        done(ms) {
+          this.caret.remove();
+          this.div.classList.add(detectDir(this.msgText.textContent) === "ltr" ? "msg-ltr" : "msg-rtl");
+          const pill = ms < 8000 ? `<span class="pill ok">⏱ ${ms}ms</span>` : `<span class="pill warn">⏱ ${Math.round(ms/1000)}s</span>`;
+          this.timeDiv.innerHTML = `${pill} <span class="pill">${time()}</span>`;
         }
-        return "rtl";
-      }
+      };
+    }
 
-      function getOrCreateSessionId() {
-        let sessionId = localStorage.getItem("eveai_sessionId");
-        if (!sessionId) {
-          sessionId = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-          localStorage.setItem("eveai_sessionId", sessionId);
-        }
-        return sessionId;
-      }
+    function createTyping() {
+      const div = document.createElement("div");
+      div.className = "typing-indicator";
+      div.innerHTML = `<div class="typing-text">در حال دریافت پاسخ...</div><div class="typing-dots"><span></span><span></span><span></span></div>`;
+      return div;
+    }
 
-      function addUserMessage(text) {
-        const container = document.createElement("div");
-        container.className = "message user-message msg-rtl";
+    let isSending = false;
 
-        const msgText = document.createElement("div");
-        msgText.className = "message-text";
-        msgText.textContent = text;
-        container.appendChild(msgText);
+    async function send() {
+      if (isSending) return;
+      const msg = input.value.trim();
+      if (!msg) return;
 
-        const timeDiv = document.createElement("div");
-        timeDiv.className = "message-time";
-        timeDiv.textContent = timeHHMM();
-        container.appendChild(timeDiv);
+      console.log("📤 Sending:", msg);
+      addUserMsg(msg);
+      input.value = "";
 
-        chatBox.appendChild(container);
-        scrollToBottom();
-      }
+      const typing = createTyping();
+      chatBox.appendChild(typing);
+      scroll();
 
-      function createBotMessage() {
-        const container = document.createElement("div");
-        container.className = "message bot-message";
+      isSending = true;
+      sendBtn.disabled = true;
+      input.disabled = true;
 
-        const msgText = document.createElement("div");
-        msgText.className = "message-text";
-        msgText.style.whiteSpace = "pre-wrap";
-        
-        const caret = document.createElement("span");
-        caret.className = "typing-caret";
-        caret.textContent = "▍";
-        msgText.appendChild(caret);
+      const start = performance.now();
 
-        container.appendChild(msgText);
+      try {
+        const res = await fetch(N8N_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ msg, sessionId: getSessionId() })
+        });
 
-        const timeDiv = document.createElement("div");
-        timeDiv.className = "message-time";
-        container.appendChild(timeDiv);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.body) throw new Error("No response body");
 
-        chatBox.appendChild(container);
-        scrollToBottom();
+        typing.remove();
+        const botMsg = createBotMsg();
 
-        return {
-          container,
-          msgText,
-          caret,
-          timeDiv,
-          appendText: function(text) {
-            const textNode = document.createTextNode(text);
-            this.msgText.insertBefore(textNode, this.caret);
-            scrollToBottom();
-          },
-          finalize: function(latencyMs) {
-            this.caret.remove();
-            const dir = detectDir(this.msgText.textContent);
-            this.container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
-            
-            const pill = latencyMs < 8000
-              ? `<span class="pill ok">⏱ ${latencyMs}ms</span>`
-              : `<span class="pill warn">⏱ ${Math.round(latencyMs/1000)}s</span>`;
-            
-            this.timeDiv.innerHTML = pill + ` <span class="pill">${timeHHMM()}</span>`;
-          }
-        };
-      }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
 
-      function createTypingIndicator() {
-        const typingDiv = document.createElement("div");
-        typingDiv.className = "typing-indicator";
-        typingDiv.innerHTML = `
-          <div class="typing-text">در حال دریافت پاسخ...</div>
-          <div class="typing-dots"><span></span><span></span><span></span></div>
-        `;
-        return typingDiv;
-      }
+        while (true) {
+          const {done, value} = await reader.read();
+          if (done) break;
 
-      // ============ CORE STREAMING FUNCTION (SSE FORMAT) ============
-      async function parseN8nStream(responseText) {
-        console.log("📥 Raw response length:", responseText.length);
-        console.log("📥 First 500 chars:", responseText.substring(0, 500));
-        
-        // n8n streaming sends SSE format: "data: {...}\n\n"
-        const lines = responseText.split('\n');
-        const contentPieces = [];
-        
-        console.log(`📦 Processing ${lines.length} lines`);
-        
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i].trim();
-          
-          // Skip empty lines
-          if (!line) continue;
-          
-          // SSE format: "data: {...}"
-          if (line.startsWith('data:')) {
-            line = line.substring(5).trim();
-          }
-          
-          // Skip if not JSON
-          if (!line.startsWith('{')) continue;
-          
-          try {
-            const parsed = JSON.parse(line);
-            console.log(`✅ Line ${i + 1}:`, parsed.type, parsed.content?.substring(0, 30));
-            
-            if (parsed.type === "item" && parsed.content) {
-              contentPieces.push(parsed.content);
-            } else if (parsed.type === "end") {
-              console.log("🏁 Stream ended");
-              break;
+          buffer += decoder.decode(value, {stream: true});
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            let clean = line.trim();
+            if (clean.startsWith('data:')) clean = clean.substring(5).trim();
+            if (!clean || !clean.startsWith('{')) continue;
+
+            try {
+              const obj = JSON.parse(clean);
+              console.log("✅", obj.type, obj.content?.substring(0, 30));
+              
+              if (obj.type === "item" && obj.content) {
+                botMsg.append(obj.content);
+              } else if (obj.type === "end") {
+                break;
+              }
+            } catch (e) {
+              console.warn("⚠️ Parse error:", clean.substring(0, 100));
             }
-          } catch (parseErr) {
-            console.warn(`⚠️ Could not parse line ${i + 1}:`, line.substring(0, 100));
           }
         }
-        
-        console.log(`📝 Extracted ${contentPieces.length} content pieces`);
-        return contentPieces.join('');
+
+        const ms = Math.round(performance.now() - start);
+        botMsg.done(ms);
+        console.log(`⏱️ ${ms}ms`);
+
+      } catch (err) {
+        console.error("🚨", err);
+        typing.remove();
+        const errMsg = createBotMsg();
+        errMsg.append("مشکلی پیش آمد. لطفاً دوباره تلاش کنید.");
+        errMsg.done(0);
+        errMsg.timeDiv.innerHTML = '<span class="pill warn">Error</span>';
+      } finally {
+        isSending = false;
+        sendBtn.disabled = false;
+        input.disabled = false;
       }
+    }
 
-      let isSending = false;
+    clearBtn.onclick = () => {
+      if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
+      chatBox.querySelectorAll(".message").forEach(m => m.remove());
+      localStorage.removeItem("eveai_sessionId");
+      const msg = createBotMsg();
+      msg.append("گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.");
+      msg.done(0);
+      msg.timeDiv.innerHTML = '<span class="pill ok">Cleared</span>';
+    };
 
-      async function sendMessage() {
-        if (isSending) return;
+    sendBtn.onclick = send;
+    input.onkeydown = (e) => { if (e.key === "Enter") send(); };
 
-        const msg = input.value.trim();
-        if (!msg) return;
-
-        console.log("📤 Sending message:", msg);
-        addUserMessage(msg);
-        input.value = "";
-        input.focus();
-
-        const typingIndicator = createTypingIndicator();
-        chatBox.appendChild(typingIndicator);
-        scrollToBottom();
-
-        isSending = true;
-        sendBtn.disabled = true;
-        input.disabled = true;
-
-        const started = performance.now();
-
-        try {
-          const sessionId = getOrCreateSessionId();
-          console.log("🔑 Session ID:", sessionId);
-          
-          const response = await fetch(N8N_WEBHOOK_URL, {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            body:
+    document.querySelectorAll(".quick-btn").forEach(btn => {
+      btn.onclick = () => {
+        input.value = btn.getAttribute("data-question");
+        send();
+      };
+    });
+  </script>
+</body>
+</html></parameter>
