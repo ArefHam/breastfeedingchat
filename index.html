@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Lalezar&display=swap" rel="stylesheet">
 
   <style>
-    /* ✅ (unchanged) your full CSS here */
     :root{
       --bg1:#fff7fb;
       --bg2:#f1f7ff;
@@ -33,6 +32,8 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
+
+    /* ✅ prevent whole page scrolling; chat scrolls only */
     body {
       font-family: 'Vazirmatn', sans-serif;
       direction: rtl;
@@ -42,21 +43,32 @@
         radial-gradient(1000px 500px at 90% 0%, rgba(34,197,94,0.10), transparent 55%),
         radial-gradient(1100px 600px at 60% 110%, rgba(236,72,153,0.12), transparent 60%),
         linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
-      overflow-x: hidden;
+      overflow: hidden; /* ✅ important */
     }
+
     ::selection{ background: rgba(168,85,247,0.25); }
+
+    /* ✅ page layout wrapper */
+    .page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+    }
 
     .header-decoration {
       height: 6px;
       background: linear-gradient(to left, #6fd2ff, #a18aff, #ff9cee);
       border-radius: 0 0 10px 10px;
       box-shadow: 0 8px 20px rgba(168,85,247,0.15);
+      flex: 0 0 auto;
     }
 
     .chat-container {
       width: 920px;
-      max-width: 95%;
-      margin: 22px auto;
+      max-width: 100%;
+      margin: 0 auto;
       background: rgba(255,255,255,0.80);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -66,8 +78,11 @@
       flex-direction: column;
       overflow: hidden;
       border: 1px solid rgba(239,230,255,0.9);
-      min-height: 90vh;
       position: relative;
+
+      /* ✅ Fill remaining height in viewport */
+      flex: 1 1 auto;
+      min-height: 0; /* ✅ critical for inner scrolling */
     }
 
     .chat-container::before{
@@ -94,6 +109,7 @@
       gap: 14px;
       z-index: 1;
       border-bottom: 1px solid rgba(255,255,255,0.12);
+      flex: 0 0 auto;
     }
     .chat-header::after{
       content:"";
@@ -126,6 +142,7 @@
       background: rgba(252,250,255,0.92);
       border-bottom: 1px solid rgba(239,230,255,0.8);
       z-index: 1;
+      flex: 0 0 auto;
     }
     .quick-btn {
       padding: 10px 14px;
@@ -147,10 +164,12 @@
     .quick-btn i{ color: rgba(168,85,247,0.95); }
     .quick-btn:hover { transform: translateY(-2px); border-color: rgba(168,85,247,0.45); }
 
+    /* ✅ ONLY THIS scrolls */
     .chat-box {
-      flex: 1;
-      height: 520px;
-      overflow-y: auto;
+      flex: 1 1 auto;
+      min-height: 0;           /* ✅ critical */
+      overflow-y: auto;        /* ✅ scroll here */
+      overflow-x: hidden;
       padding: 20px 16px 22px 18px;
       background:
         radial-gradient(700px 260px at 80% 0%, rgba(168,85,247,0.08), transparent 60%),
@@ -159,7 +178,6 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
-      overflow-x: hidden;
       z-index: 1;
     }
 
@@ -313,6 +331,7 @@
       border-top: 1px solid rgba(239,230,255,0.95);
       background: linear-gradient(180deg, rgba(252,250,255,0.96) 0%, rgba(250,247,255,0.92) 100%);
       z-index: 1;
+      flex: 0 0 auto;
     }
     input {
       flex: 1;
@@ -375,6 +394,7 @@
       gap: 18px;
       flex-wrap: wrap;
       z-index: 1;
+      flex: 0 0 auto;
     }
     .footer-info i { color: rgba(168,85,247,0.95); }
 
@@ -405,8 +425,8 @@
     @keyframes dots { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
 
     @media (max-width: 768px) {
-      .chat-container { margin: 10px auto; border-radius: 18px; }
-      .chat-box { height: 450px; padding: 14px 10px 18px 12px; }
+      .page { padding: 10px; gap: 10px; }
+      .chat-container { border-radius: 18px; }
       .message { max-width: 88%; margin-right: 0 !important; margin-left: 0 !important; }
       .input-area { flex-direction: column; padding: 14px; }
       button { width: 100%; }
@@ -417,57 +437,57 @@
 </head>
 
 <body>
-  <div class="header-decoration"></div>
+  <div class="page">
+    <div class="header-decoration"></div>
 
-  <div class="chat-container">
-    <div class="chat-header">
-      <i class="fas fa-heart"></i>
-      <div>
-        گپ و گفت مادرانه
-        <div class="header-subtitle">پرسش و پاسخ تخصصی درباره شیردهی و مراقبت از نوزاد</div>
-      </div>
-      <i class="fas fa-baby"></i>
-    </div>
-
-    <div class="quick-actions">
-      <button class="quick-btn" data-question="مشکلات شیردهی چیست؟"><i class="fas fa-question-circle"></i> مشکلات شیردهی</button>
-      <button class="quick-btn" data-question="فواید شیر مادر چیست؟"><i class="fas fa-heartbeat"></i> فواید شیر مادر</button>
-      <button class="quick-btn" data-question="راههای افزایش شیر مادر چیست؟"><i class="fas fa-plus-circle"></i> افزایش شیر</button>
-      <button class="quick-btn" data-question="تغذیه مادر شیرده"><i class="fas fa-apple-alt"></i> تغذیه مادر</button>
-      <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk while breastfeeding?"><i class="fas fa-language"></i> English test</button>
-      <button class="quick-btn" data-question="كيف أعرف أن طفلي يحصل على ما يكفي من الحليب أثناء الرضاعة؟"><i class="fas fa-language"></i> Arabic test</button>
-    </div>
-
-    <div id="chat-box" class="chat-box">
-      <div class="welcome-message">
-        <div class="welcome-title">
-          <i class="fas fa-hands-helping"></i>
-          خوش آمدید مادر عزیز!
-          <i class="fas fa-hands-helping"></i>
+    <div class="chat-container">
+      <div class="chat-header">
+        <i class="fas fa-heart"></i>
+        <div>
+          گپ و گفت مادرانه
+          <div class="header-subtitle">پرسش و پاسخ تخصصی درباره شیردهی و مراقبت از نوزاد</div>
         </div>
-        <div class="welcome-text">
-          اینجا فضایی امن برای پرسش‌های شما درباره شیردهی و مراقبت از نوزاد است. می‌توانید سوالات خود را مطرح کنید یا از دکمه‌های سریع بالا استفاده نمایید.
+        <i class="fas fa-baby"></i>
+      </div>
+
+      <div class="quick-actions">
+        <button class="quick-btn" data-question="مشکلات شیردهی چیست؟"><i class="fas fa-question-circle"></i> مشکلات شیردهی</button>
+        <button class="quick-btn" data-question="فواید شیر مادر چیست؟"><i class="fas fa-heartbeat"></i> فواید شیر مادر</button>
+        <button class="quick-btn" data-question="راههای افزایش شیر مادر چیست؟"><i class="fas fa-plus-circle"></i> افزایش شیر</button>
+        <button class="quick-btn" data-question="تغذیه مادر شیرده"><i class="fas fa-apple-alt"></i> تغذیه مادر</button>
+        <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk while breastfeeding?"><i class="fas fa-language"></i> English test</button>
+        <button class="quick-btn" data-question="كيف أعرف أن طفلي يحصل على ما يكفي من الحليب أثناء الرضاعة؟"><i class="fas fa-language"></i> Arabic test</button>
+      </div>
+
+      <div id="chat-box" class="chat-box">
+        <div class="welcome-message">
+          <div class="welcome-title">
+            <i class="fas fa-hands-helping"></i>
+            خوش آمدید مادر عزیز!
+            <i class="fas fa-hands-helping"></i>
+          </div>
+          <div class="welcome-text">
+            اینجا فضایی امن برای پرسش‌های شما درباره شیردهی و مراقبت از نوزاد است. می‌توانید سوالات خود را مطرح کنید یا از دکمه‌های سریع بالا استفاده نمایید.
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="input-area">
-      <input id="user-input" type="text" placeholder="سوال خود درباره شیردهی، تغذیه نوزاد یا مراقبت‌های پس از زایمان را اینجا بنویسید..." />
-      <button id="send-btn"><i class="fas fa-paper-plane"></i> ارسال</button>
-      <button id="clear-btn"><i class="fas fa-trash-alt"></i> پاک‌کردن</button>
-    </div>
+      <div class="input-area">
+        <input id="user-input" type="text" placeholder="سوال خود درباره شیردهی، تغذیه نوزاد یا مراقبت‌های پس از زایمان را اینجا بنویسید..." />
+        <button id="send-btn"><i class="fas fa-paper-plane"></i> ارسال</button>
+        <button id="clear-btn"><i class="fas fa-trash-alt"></i> پاک‌کردن</button>
+      </div>
 
-    <div class="footer-info">
-      <div><i class="fas fa-shield-alt"></i> اطلاعات شما محرمانه می‌ماند</div>
-      <div><i class="fas fa-users"></i> پاسخ‌ها توسط مشاوران شیردهی بررسی می‌شوند</div>
-      <div><i class="fas fa-clock"></i> پاسخگویی ۲۴ ساعته</div>
+      <div class="footer-info">
+        <div><i class="fas fa-shield-alt"></i> اطلاعات شما محرمانه می‌ماند</div>
+        <div><i class="fas fa-users"></i> پاسخ‌ها توسط مشاوران شیردهی بررسی می‌شوند</div>
+        <div><i class="fas fa-clock"></i> پاسخگویی ۲۴ ساعته</div>
+      </div>
     </div>
   </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      // ✅ Use your existing webhook
-      // Tip: add ?stream=1 (optional) if you want to branch in n8n later.
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
       const sendBtn = document.getElementById("send-btn");
@@ -476,7 +496,6 @@
       const quickButtons = document.querySelectorAll(".quick-btn");
       const chatBox = document.getElementById("chat-box");
 
-      // ---------- Utilities ----------
       function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
 
       function escapeHTML(str) {
@@ -492,7 +511,6 @@
         })[s]);
       }
 
-      // Apply markdown-lite AFTER streaming finishes
       function renderMarkdownLiteToHTML(rawText) {
         const text = (rawText == null) ? "" : String(rawText);
         let safe = escapeHTML(text);
@@ -543,7 +561,6 @@
         return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
       }
 
-      // ---------- Message creation ----------
       function addMessage({ text, sender, metaPills = [], streaming = false }) {
         const container = document.createElement("div");
         container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
@@ -559,7 +576,6 @@
           const dir = detectDir(text);
           container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
 
-          // In streaming mode we keep a raw text container (no HTML)
           const wrap = document.createElement("div");
           wrap.className = "rendered-answer";
 
@@ -597,7 +613,6 @@
         return container;
       }
 
-      // ---------- Robust extraction (for NON-stream fallback) ----------
       function extractAnswer(data) {
         const candidate =
           (data && (data.answer ?? data.response ?? data.text ?? data.output)) ??
@@ -614,15 +629,12 @@
         return String(candidate);
       }
 
-      // ---------- Streaming helpers ----------
       function looksLikeJSON(s) {
         const t = (s || "").trim();
         return (t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"));
       }
 
-      // Parse SSE-style frames (data: ...)
       function parseSSEFrames(buffer) {
-        // frames are separated by blank lines
         const parts = buffer.split("\n\n");
         const rest = parts.pop() || "";
         const frames = parts;
@@ -632,40 +644,27 @@
           const lines = frame.split("\n");
           for (const line of lines) {
             if (!line.startsWith("data:")) continue;
-            const payload = line.slice(5).trim();
-            out.push(payload);
+            out.push(line.slice(5).trim());
           }
         }
         return { chunks: out, rest };
       }
 
-      // Decide how to interpret each SSE data payload
       function payloadToToken(payloadStr) {
         if (!payloadStr) return "";
-
-        // Many implementations send: data: {"token":"..."} or {"delta":"..."} or {"text":"..."}
-        // Some send: data: "..."
-        // Some send: data: [DONE]
         if (payloadStr === "[DONE]" || payloadStr === "DONE") return "__DONE__";
 
-        // Try JSON
         if (looksLikeJSON(payloadStr)) {
           try {
             const obj = JSON.parse(payloadStr);
             if (typeof obj === "string") return obj;
             if (obj && typeof obj === "object") {
-              // common token keys:
-              const token = obj.token ?? obj.delta ?? obj.text ?? obj.content ?? obj.data ?? obj.answer ?? "";
+              const token = obj.token ?? obj.delta ?? obj.text ?? obj.content ?? obj.data ?? "";
               if (typeof token === "string" && token.length) return token;
-
-              // sometimes final object is returned (non-token)
-              // we return special marker so caller can handle
               return { __json: obj };
             }
           } catch {}
         }
-
-        // plain text token
         return payloadStr;
       }
 
@@ -680,7 +679,6 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              // ask for streaming if server supports it
               "Accept": "text/event-stream, application/json"
             },
             body: JSON.stringify({ msg, sessionId }),
@@ -695,14 +693,13 @@
 
           const ct = (res.headers.get("content-type") || "").toLowerCase();
 
-          // ✅ If server doesn't stream (still returns JSON), fallback safely
+          // JSON fallback
           if (!res.body || ct.includes("application/json")) {
             const data = await res.json();
             onFinalJSON?.(data);
             return { latencyMs: Math.round(performance.now() - started), streamed: false };
           }
 
-          // ✅ Streaming path: read chunks
           const reader = res.body.getReader();
           const decoder = new TextDecoder("utf-8");
 
@@ -715,43 +712,27 @@
 
             buffer += decoder.decode(value, { stream: true });
 
-            // If it’s SSE, parse frames.
-            // If it's not SSE but chunked plain text, we still handle it below.
             const { chunks, rest } = parseSSEFrames(buffer);
             buffer = rest;
 
-            if (chunks.length) {
-              for (const s of chunks) {
-                const tokenOrObj = payloadToToken(s);
+            for (const s of chunks) {
+              const tokenOrObj = payloadToToken(s);
 
-                if (tokenOrObj === "__DONE__") {
-                  // optional done marker
-                  continue;
-                }
+              if (tokenOrObj === "__DONE__") continue;
 
-                if (typeof tokenOrObj === "object" && tokenOrObj && tokenOrObj.__json) {
-                  // This is a JSON payload mid-stream (often final).
-                  onFinalJSON?.(tokenOrObj.__json);
-                  continue;
-                }
-
-                const tok = String(tokenOrObj || "");
-                if (!tok) continue;
-
-                sawAnyToken = true;
-                onToken(tok);
+              if (typeof tokenOrObj === "object" && tokenOrObj && tokenOrObj.__json) {
+                onFinalJSON?.(tokenOrObj.__json);
+                continue;
               }
-            } else {
-              // Not receiving SSE frames; maybe server is chunking plain text
-              // We stream the raw incoming buffer in small increments.
-              // But to avoid duplicating, only do it if buffer grows and no SSE frames appear for a while.
-              // Simple approach: do nothing here. (Keeps behavior clean)
-              // If you discover your n8n streams plain text, tell me and I’ll switch this to raw-chunk mode.
+
+              const tok = String(tokenOrObj || "");
+              if (!tok) continue;
+
+              sawAnyToken = true;
+              onToken(tok);
             }
           }
 
-          // When stream ends, there might still be a final JSON in `buffer` (rare).
-          // Try to parse it as JSON.
           const tail = (buffer || "").trim();
           if (tail && looksLikeJSON(tail) && !sawAnyToken) {
             try { onFinalJSON?.(JSON.parse(tail)); } catch {}
@@ -764,7 +745,6 @@
         }
       }
 
-      // ---------- Main send logic ----------
       let isSending = false;
 
       async function sendMessage() {
@@ -788,7 +768,6 @@
         try {
           const sessionId = getOrCreateSessionId();
 
-          // Remove typing indicator once we start receiving stream
           let removedTypingIndicator = false;
           const removeTyping = () => {
             if (!removedTypingIndicator && typingIndicator && typingIndicator.parentNode) {
@@ -797,7 +776,6 @@
             }
           };
 
-          // Create empty bot message in streaming mode
           const botMsg = addMessage({
             text: "",
             sender: "bot",
@@ -807,7 +785,6 @@
 
           const stream = botMsg.__stream;
 
-          // Stream tokens into the bubble
           const { latencyMs, streamed } = await postToN8nStreaming({
             msg,
             sessionId,
@@ -818,22 +795,16 @@
               scrollToBottom();
             },
             onFinalJSON: (data) => {
-              // If n8n doesn't stream, or sends final JSON, we can still show it
               removeTyping();
-
-              // If we already got streamed tokens, ignore JSON unless you want to append metadata.
               if (stream.rawText && stream.rawText.trim().length) return;
-
               const ans = extractAnswer(data);
               stream.rawText = ans || "پاسخ نامعتبر از سرور دریافت شد.";
               stream.pre.textContent = stream.rawText;
-            },
-            timeoutMs: 120000
+            }
           });
 
           removeTyping();
 
-          // Update pills (latency + mode)
           const pill = latencyMs < 8000
             ? { label: `⏱ ${latencyMs}ms`, cls: "ok" }
             : { label: `⏱ ${Math.round(latencyMs/1000)}s`, cls: "warn" };
@@ -845,7 +816,6 @@
             pillHTML(timeHHMM(), "")
           ].join(" ");
 
-          // Finish: remove caret and render markdown-lite safely
           stream.caret.textContent = "";
           botMsg.querySelector(".message-text").innerHTML =
             `<div class="rendered-answer">${renderMarkdownLiteToHTML(stream.rawText)}</div>`;
@@ -861,7 +831,6 @@
         }
       }
 
-      // ---------- Clear behavior ----------
       clearBtn.addEventListener("click", function () {
         if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
 
@@ -873,7 +842,6 @@
         addMessage({ text: "گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.", sender: "bot", metaPills: [{label:"Cleared", cls:"ok"}] });
       });
 
-      // ---------- Events ----------
       sendBtn.addEventListener("click", sendMessage);
       input.addEventListener("keydown", function (e) {
         if (e.key === "Enter") sendMessage();
@@ -881,8 +849,7 @@
 
       quickButtons.forEach(button => {
         button.addEventListener("click", function () {
-          const question = this.getAttribute("data-question") || "";
-          input.value = question;
+          input.value = this.getAttribute("data-question") || "";
           sendMessage();
         });
       });
