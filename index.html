@@ -409,6 +409,103 @@
         const decoder = new TextDecoder();
         let buffer = "";
 
+      // ---------- STREAMING HANDLER - MANUAL JSON EXTRACTION ----------
+      async function streamFromN8n(msg, sessionId, onChunk, onError) {
+        const started = performance.now();
+
+        try {
+          const response = await fetch(N8N_WEBHOOK_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "text/event-stream, application/x-ndjson, application/json",
+              // Avoid Brotli-compressed responses that some proxies send by default,
+              // which can delay chunk delivery and break streaming parsing.
+              "Accept-Encoding": "identity"
+            },
+            body: JSON.stringify({ msg, sessionId })
+          });
+
+          if (!response.ok || !response.body) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const decoder = new TextDecoder("utf-8");
+          const reader = response.body.getReader();
+          let buffer = "";
+          let pendingJson = "";
+          let sseDataLines = [];
+
+          const tryParse = (candidate) => {
+            const trimmed = (candidate || "").trim();
+            if (!trimmed) return false;
+
+            try {
+              const parsed = JSON.parse(trimmed);
+              console.log("✅ Parsed:", parsed.type, parsed.content?.substring?.(0, 30));
+
+              if (parsed.type === "item" && parsed.content) {
+                onChunk(parsed.content);
+              } else if (parsed.type === "end") {
+                console.log("🏁 Stream ended");
+              }
+
+              return true;
+            } catch (err) {
+              return false;
+            }
+          };
+
+          const flushSseEvent = () => {
+            if (!sseDataLines.length) return;
+            const candidate = sseDataLines.join("\n");
+            sseDataLines = [];
+
+            if (tryParse(pendingJson + candidate)) {
+              pendingJson = "";
+            } else {
+              pendingJson += candidate;
+            }
+          };
+
+          const processBuffer = () => {
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() || ""; // keep last partial line
+
+            for (const rawLine of lines) {
+              // SSE events arrive as lines prefixed with "data:" and separated by blank lines
+              if (rawLine.startsWith("data:")) {
+                sseDataLines.push(rawLine.slice(5).trimStart());
+                continue;
+              }
+
+              // Ignore other SSE control lines
+              if (rawLine.startsWith(":") || rawLine.startsWith("event:")) continue;
+
+              // Empty line means the end of an SSE event; flush what we collected
+              if (rawLine.trim() === "") {
+                flushSseEvent();
+
+                // If we were buffering NDJSON without SSE, try to parse it now
+                if (pendingJson.trim()) {
+                  tryParse(pendingJson);
+                  pendingJson = "";
+                }
+                continue;
+              }
+
+              // NDJSON fallback: accumulate partial JSON fragments
+              if (sseDataLines.length) {
+                sseDataLines.push(rawLine);
+                continue;
+              }
+
+              const candidate = pendingJson + rawLine;
+              if (tryParse(candidate)) {
+                pendingJson = "";
+              } else {
+                pendingJson = candidate;
+              }
         while (true) {
           const {done, value} = await reader.read();
           if (done) break;
@@ -434,6 +531,24 @@
             } catch (e) {
               console.warn("⚠️ Parse error:", clean.substring(0, 100));
             }
+          };
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            processBuffer();
+          }
+
+          // Flush remaining buffer
+          buffer += decoder.decode();
+          processBuffer();
+
+          // Attempt to parse any leftover SSE event or pending JSON
+          flushSseEvent();
+          if (pendingJson) {
+            tryParse(pendingJson);
           }
         }
 
