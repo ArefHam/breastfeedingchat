@@ -551,65 +551,94 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /**
-   * Parses concatenated JSON objects: {...}{...}{...}
-   * Works even when a JSON object is split across chunks.
+   * Extracts complete JSON objects from a stream buffer.
+   * Handles concatenated objects: {...}{...} AND objects split across chunks.
+   * Also handles optional "data:" prefix lines and [DONE].
    */
-  function extractJsonObjects(buffer) {
-    const objs = [];
-    let inStr = false;
-    let esc = false;
-    let depth = 0;
-    let start = -1;
+  function extractStreamObjects(buffer) {
+    const items = [];
+    let i = 0;
     let lastConsumed = 0;
 
-    for (let i = 0; i < buffer.length; i++) {
-      const ch = buffer[i];
+    // Fast path: remove any BOM
+    if (buffer.charCodeAt(0) === 0xFEFF) buffer = buffer.slice(1);
 
-      if (inStr) {
-        if (esc) {
-          esc = false;
-        } else if (ch === "\\") {
-          esc = true;
-        } else if (ch === '"') {
-          inStr = false;
-        }
-        continue;
-      } else {
-        if (ch === '"') {
-          inStr = true;
-          continue;
-        }
-        if (ch === "{") {
-          if (depth === 0) start = i;
-          depth++;
-          continue;
-        }
-        if (ch === "}") {
-          if (depth > 0) depth--;
-          if (depth === 0 && start !== -1) {
-            const jsonStr = buffer.slice(start, i + 1);
-            objs.push(jsonStr);
-            lastConsumed = i + 1;
-            start = -1;
-          }
-        }
+    while (i < buffer.length) {
+      // Skip whitespace/newlines
+      while (i < buffer.length && /\s/.test(buffer[i])) i++;
+
+      // Optional SSE "data:" prefix
+      if (buffer.startsWith("data:", i)) {
+        i += 5;
+        while (i < buffer.length && buffer[i] === " ") i++;
       }
+
+      // Handle [DONE]
+      if (buffer.startsWith("[DONE]", i)) {
+        items.push({ kind: "done" });
+        i += 6;
+        lastConsumed = i;
+        continue;
+      }
+
+      // We only care about JSON objects starting with {
+      if (i >= buffer.length || buffer[i] !== "{") break;
+
+      const start = i;
+      let depth = 0;
+      let inStr = false;
+      let esc = false;
+
+      while (i < buffer.length) {
+        const ch = buffer[i];
+
+        if (inStr) {
+          if (esc) esc = false;
+          else if (ch === "\\") esc = true;
+          else if (ch === '"') inStr = false;
+          i++;
+          continue;
+        }
+
+        if (ch === '"') { inStr = true; i++; continue; }
+        if (ch === "{") { depth++; i++; continue; }
+        if (ch === "}") {
+          depth--;
+          i++;
+          if (depth === 0) {
+            const jsonStr = buffer.slice(start, i);
+            items.push({ kind: "json", jsonStr });
+            lastConsumed = i;
+            break;
+          }
+          continue;
+        }
+
+        i++;
+      }
+
+      // If we exited because we ran out of buffer while inside an object → incomplete
+      if (depth !== 0) break;
     }
 
-    const remainder = buffer.slice(lastConsumed);
-    return { objs, remainder };
+    return { items, remainder: buffer.slice(lastConsumed) };
   }
 
   async function streamFromN8n({ msg, sessionId, onToken, onDone }) {
+    const ctrl = new AbortController();
+
     const res = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Leaving Accept broad; n8n sends application/json in your case
-        "Accept": "*/*"
+        "Accept": "*/*",
+        // This discourages intermediary caches; doesn't fix buffering proxies, but helps.
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
       },
       body: JSON.stringify({ msg, sessionId }),
       cache: "no-store",
+      signal: ctrl.signal,
     });
 
     if (!res.ok) {
@@ -617,8 +646,7 @@ document.addEventListener("DOMContentLoaded", function () {
       throw new Error(`HTTP ${res.status} ${res.statusText} :: ${t.slice(0, 200)}`);
     }
 
-    // If the browser/proxy buffers (common with br/gzip), we may effectively get all at once.
-    // This code handles both incremental and full-body arrival.
+    // If streaming is blocked by environment, we may get no ReadableStream.
     if (!res.body) {
       const full = await res.text();
       parseFullText(full, onToken, onDone);
@@ -628,6 +656,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
+    let ended = false;
 
     while (true) {
       const { value, done } = await reader.read();
@@ -635,42 +664,58 @@ document.addEventListener("DOMContentLoaded", function () {
 
       buffer += decoder.decode(value, { stream: true });
 
-      const { objs, remainder } = extractJsonObjects(buffer);
+      const { items, remainder } = extractStreamObjects(buffer);
       buffer = remainder;
 
-      for (const s of objs) {
-        let obj;
-        try { obj = JSON.parse(s); } catch { continue; }
-
-        if (obj?.type === "item" && typeof obj.content === "string") {
-          if (obj.content) onToken(obj.content);
-        }
-        if (obj?.type === "end") {
+      for (const it of items) {
+        if (it.kind === "done") {
+          ended = true;
           onDone();
+          try { ctrl.abort(); } catch {}
           return;
+        }
+        if (it.kind === "json") {
+          let obj;
+          try { obj = JSON.parse(it.jsonStr); } catch { continue; }
+
+          if (obj?.type === "item" && typeof obj.content === "string") {
+            // ✅ n8n streaming token
+            if (obj.content) onToken(obj.content);
+          } else if (obj?.type === "end") {
+            ended = true;
+            onDone();
+            try { ctrl.abort(); } catch {}
+            return;
+          }
         }
       }
     }
 
-    // End-of-stream: parse whatever is left (if any complete objects exist)
-    parseFullText(buffer, onToken, onDone);
+    // End of stream: try parse what remains
+    if (!ended) parseFullText(buffer, onToken, onDone);
   }
 
   function parseFullText(text, onToken, onDone) {
     if (!text) { onDone(); return; }
 
-    // Some proxies may insert whitespace/newlines; OK.
-    const { objs } = extractJsonObjects(text);
+    // Extract everything we can from concatenated JSON or SSE-like payload
+    let buffer = String(text);
+    while (buffer && buffer.length) {
+      const { items, remainder } = extractStreamObjects(buffer);
+      buffer = remainder;
 
-    let sawEnd = false;
-    for (const s of objs) {
-      try {
-        const obj = JSON.parse(s);
-        if (obj?.type === "item" && typeof obj.content === "string") {
-          if (obj.content) onToken(obj.content);
+      if (!items.length) break;
+
+      for (const it of items) {
+        if (it.kind === "done") { onDone(); return; }
+        if (it.kind === "json") {
+          try {
+            const obj = JSON.parse(it.jsonStr);
+            if (obj?.type === "item" && typeof obj.content === "string" && obj.content) onToken(obj.content);
+            if (obj?.type === "end") { onDone(); return; }
+          } catch {}
         }
-        if (obj?.type === "end") sawEnd = true;
-      } catch {}
+      }
     }
     onDone();
   }
@@ -703,6 +748,7 @@ document.addEventListener("DOMContentLoaded", function () {
         onToken: (token) => {
           receivedAny = true;
 
+          // Lock direction once we see the first non-space token
           if (!dirLocked && token && token.trim()) {
             const dir = detectDir(token);
             botMsg.classList.remove("msg-rtl", "msg-ltr");
