@@ -485,7 +485,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-      // ✅ YOUR n8n WEBHOOK URL
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
       const sendBtn = document.getElementById("send-btn");
@@ -568,42 +567,69 @@
 
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+                // Process any remaining buffer at the end
+                if(buffer.trim()) processLine(buffer);
+                break;
+            }
 
             buffer += decoder.decode(value, { stream: true });
             
-            // ✅ SPLIT BY NEWLINE: n8n sends one JSON object per line
+            // Fix: Regex to separate stuck JSON objects like "}{" -> "}\n{"
+            // This happens if network packets merge
+            buffer = buffer.replace(/\}\s*\{/g, '}\n{');
+
             const lines = buffer.split("\n");
             
-            // Keep the last line in the buffer because it might be incomplete (half a JSON object)
-            buffer = lines.pop(); 
+            // IMPORTANT CHANGE: We don't blindly pop() the last line.
+            // We reset buffer and try to process everything. 
+            // If the last line fails to parse, ONLY THEN we put it back in buffer.
+            buffer = ""; 
 
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed) continue;
+            for (let i = 0; i < lines.length; i++) {
+              const line = lines[i];
+              if (!line.trim()) continue;
 
-              try {
-                // ✅ PARSE DIRECTLY (No "data:" check needed)
-                const json = JSON.parse(trimmed);
-
-                // ✅ HANDLE SPECIFIC n8n FORMAT (shown in your screenshot)
-                if (json.content) {
-                  typingState.rawText += json.content;
-                  typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
-                  scrollToBottom();
-                }
-                // We ignore "type": "begin" and "type": "end" silently
-              } catch (e) {
-                // If a line is malformed, we skip it instead of erroring
-                console.warn("Skipping invalid JSON line:", trimmed);
+              // Helper to attempt parsing
+              const success = processLine(line);
+              
+              if (!success && i === lines.length - 1) {
+                // If the LAST line failed, it's likely incomplete. Save it.
+                buffer = line;
               }
             }
           }
+
+          function processLine(line) {
+             try {
+                // Remove "data:" prefix if it exists (legacy support)
+                let clean = line.trim();
+                if (clean.startsWith("data:")) clean = clean.replace("data:", "").trim();
+                if (clean === "[DONE]") return true;
+
+                const json = JSON.parse(clean);
+
+                // Handle n8n specific formats
+                const chunk = json.content || json.output || json.token || ""; 
+                if (chunk) {
+                  typingState.rawText += chunk;
+                  typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
+                  scrollToBottom();
+                }
+                return true; // Success
+             } catch (e) {
+                return false; // Failed to parse (incomplete line)
+             }
+          }
+
           typingState.caret.remove();
         } catch (error) {
-          console.error(error);
+          console.error("Chat Error:", error);
           typingState.caret.remove();
-          typingState.pre.textContent += "\n[خطا در ارتباط]";
+          // Only show error if we haven't received ANY text yet
+          if (!typingState.rawText) {
+             typingState.pre.textContent += "\n[خطا در ارتباط. لطفاً دوباره تلاش کنید]";
+          }
         } finally {
           isSending = false;
           input.disabled = false;
