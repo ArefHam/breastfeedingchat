@@ -14,22 +14,17 @@
       --card:#ffffff;
       --ink:#1f2937;
       --muted:#6b7280;
-
       --p1:#a855f7;
       --p2:#8b5cf6;
       --p3:#ec4899;
-
       --line:#efe6ff;
       --soft:#faf7ff;
-
       --shadow: 0 18px 55px rgba(88, 28, 135, 0.14);
       --shadow2: 0 10px 25px rgba(17, 24, 39, 0.06);
-
       --r-lg:22px;
       --r-md:16px;
       --r-sm:12px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     body {
@@ -58,7 +53,6 @@
       margin: 22px auto;
       background: rgba(255,255,255,0.80);
       backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
       border-radius: var(--r-lg);
       box-shadow: var(--shadow);
       display: flex;
@@ -265,12 +259,6 @@
     .msg-rtl { direction: rtl; text-align: right; }
     .msg-ltr { direction: ltr; text-align: left; }
 
-    .rendered-answer {
-      unicode-bidi: plaintext;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
     .typing-caret {
       display: inline-block;
       width: 10px;
@@ -433,7 +421,7 @@
       <button class="quick-btn" data-question="فواید شیر مادر چیست؟"><i class="fas fa-heartbeat"></i> فواید شیر مادر</button>
       <button class="quick-btn" data-question="راههای افزایش شیر مادر چیست؟"><i class="fas fa-plus-circle"></i> افزایش شیر</button>
       <button class="quick-btn" data-question="تغذیه مادر شیرده"><i class="fas fa-apple-alt"></i> تغذیه مادر</button>
-      <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk?"><i class="fas fa-language"></i> English test</button>
+      <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk?"><i class="fas fa-language"></i> English</button>
     </div>
 
     <div id="chat-box" class="chat-box">
@@ -463,32 +451,25 @@
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    (function() {
+      'use strict';
+      
+      console.log("🚀 Script loaded - Version 2.0");
+      
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
-
+      const chatBox = document.getElementById("chat-box");
       const sendBtn = document.getElementById("send-btn");
       const clearBtn = document.getElementById("clear-btn");
       const input = document.getElementById("user-input");
       const quickButtons = document.querySelectorAll(".quick-btn");
-      const chatBox = document.getElementById("chat-box");
 
-      // ---------- Utilities ----------
       function scrollToBottom() { 
         chatBox.scrollTop = chatBox.scrollHeight; 
       }
 
-      function escapeHTML(str) {
-        return String(str).replace(/[&<>"'`=\/]/g, (s) => ({
-          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;",
-          "'": "&#39;", "`": "&#x60;", "=": "&#x3D;", "/": "&#x2F;"
-        })[s]);
-      }
-
-      function renderMarkdownLite(text) {
-        let safe = escapeHTML(text || "");
-        safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-        safe = safe.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
-        return safe;
+      function timeHHMM() {
+        const t = new Date();
+        return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`;
       }
 
       function detectDir(text) {
@@ -512,16 +493,6 @@
         return sessionId;
       }
 
-      function timeHHMM() {
-        const t = new Date();
-        return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`;
-      }
-
-      function pillHTML(label, cls) {
-        return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
-      }
-
-      // ---------- Message creation ----------
       function addUserMessage(text) {
         const container = document.createElement("div");
         container.className = "message user-message msg-rtl";
@@ -546,17 +517,13 @@
 
         const msgText = document.createElement("div");
         msgText.className = "message-text";
-        
-        const rendered = document.createElement("div");
-        rendered.className = "rendered-answer";
-        rendered.style.whiteSpace = "pre-wrap";
+        msgText.style.whiteSpace = "pre-wrap";
         
         const caret = document.createElement("span");
         caret.className = "typing-caret";
         caret.textContent = "▍";
+        msgText.appendChild(caret);
 
-        rendered.appendChild(caret);
-        msgText.appendChild(rendered);
         container.appendChild(msgText);
 
         const timeDiv = document.createElement("div");
@@ -568,24 +535,24 @@
 
         return {
           container,
-          rendered,
+          msgText,
           caret,
           timeDiv,
-          appendText: (text) => {
+          appendText: function(text) {
             const textNode = document.createTextNode(text);
-            rendered.insertBefore(textNode, caret);
+            this.msgText.insertBefore(textNode, this.caret);
             scrollToBottom();
           },
-          finalize: (latencyMs) => {
-            caret.remove();
-            const dir = detectDir(rendered.textContent);
-            container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
+          finalize: function(latencyMs) {
+            this.caret.remove();
+            const dir = detectDir(this.msgText.textContent);
+            this.container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
             
             const pill = latencyMs < 8000
-              ? { label: `⏱ ${latencyMs}ms`, cls: "ok" }
-              : { label: `⏱ ${Math.round(latencyMs/1000)}s`, cls: "warn" };
+              ? `<span class="pill ok">⏱ ${latencyMs}ms</span>`
+              : `<span class="pill warn">⏱ ${Math.round(latencyMs/1000)}s</span>`;
             
-            timeDiv.innerHTML = pillHTML(pill.label, pill.cls) + " " + pillHTML(timeHHMM(), "");
+            this.timeDiv.innerHTML = pill + ` <span class="pill">${timeHHMM()}</span>`;
           }
         };
       }
@@ -600,135 +567,50 @@
         return typingDiv;
       }
 
-      // ---------- STREAMING HANDLER - MANUAL JSON EXTRACTION ----------
-      async function streamFromN8n(msg, sessionId, onChunk, onError) {
-        const started = performance.now();
-
-        try {
-          const response = await fetch(N8N_WEBHOOK_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "text/event-stream, application/x-ndjson, application/json",
-              // Avoid Brotli-compressed responses that some proxies send by default,
-              // which can delay chunk delivery and break streaming parsing.
-              "Accept-Encoding": "identity"
-            },
-            body: JSON.stringify({ msg, sessionId })
-          });
-
-          if (!response.ok || !response.body) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const decoder = new TextDecoder("utf-8");
-          const reader = response.body.getReader();
-          let buffer = "";
-          let pending = "";
-
-          const tryParse = (candidate) => {
-            const trimmed = (candidate || "").trim();
-            if (!trimmed) return false;
-
-            try {
-              const parsed = JSON.parse(trimmed);
-              console.log("✅ Parsed:", parsed.type, parsed.content?.substring?.(0, 30));
-          const text = await response.text();
-          console.log("📥 Raw response (first 500 chars):", text.substring(0, 500));
-          console.log("📏 Total response length:", text.length);
+      // ============ CORE STREAMING FUNCTION (SSE FORMAT) ============
+      async function parseN8nStream(responseText) {
+        console.log("📥 Raw response length:", responseText.length);
+        console.log("📥 First 500 chars:", responseText.substring(0, 500));
+        
+        // n8n streaming sends SSE format: "data: {...}\n\n"
+        const lines = responseText.split('\n');
+        const contentPieces = [];
+        
+        console.log(`📦 Processing ${lines.length} lines`);
+        
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i].trim();
           
-          // Extract JSON objects (supports raw NDJSON or SSE `data:` lines)
-          const jsonRegex = /{[\s\S]*?}/g;
-          const dataLineRegex = /data:\s*({[\s\S]*?})/g;
-
-          const rawObjects = [];
-
-          // Prefer SSE-style matches if present
-          let match;
-          while ((match = dataLineRegex.exec(text)) !== null) {
-            rawObjects.push(match[1]);
+          // Skip empty lines
+          if (!line) continue;
+          
+          // SSE format: "data: {...}"
+          if (line.startsWith('data:')) {
+            line = line.substring(5).trim();
           }
-
-          if (rawObjects.length === 0) {
-            while ((match = jsonRegex.exec(text)) !== null) {
-              rawObjects.push(match[0]);
+          
+          // Skip if not JSON
+          if (!line.startsWith('{')) continue;
+          
+          try {
+            const parsed = JSON.parse(line);
+            console.log(`✅ Line ${i + 1}:`, parsed.type, parsed.content?.substring(0, 30));
+            
+            if (parsed.type === "item" && parsed.content) {
+              contentPieces.push(parsed.content);
+            } else if (parsed.type === "end") {
+              console.log("🏁 Stream ended");
+              break;
             }
+          } catch (parseErr) {
+            console.warn(`⚠️ Could not parse line ${i + 1}:`, line.substring(0, 100));
           }
-
-          console.log(`📦 Extracted ${rawObjects.length} JSON objects`);
-
-          // Parse and process each object
-          for (let idx = 0; idx < rawObjects.length; idx++) {
-            try {
-              const trimmed = (rawObjects[idx] || "").trim();
-              if (!trimmed) continue;
-
-              const parsed = JSON.parse(trimmed);
-              console.log(`✅ Object ${idx + 1}:`, parsed.type, parsed.content?.substring(0, 30));
-
-              if (parsed.type === "item" && parsed.content) {
-                onChunk(parsed.content);
-              } else if (parsed.type === "end") {
-                console.log("🏁 Stream ended");
-              }
-
-              return true;
-            } catch (err) {
-              return false;
-            } catch (parseErr) {
-              console.error(`❌ Failed to parse object ${idx + 1}:`, rawObjects[idx]?.substring(0, 100), parseErr);
-            }
-          };
-
-          const processBuffer = () => {
-            const lines = buffer.split(/\r?\n/);
-            buffer = lines.pop() || ""; // keep last partial line
-
-            for (const rawLine of lines) {
-              let line = rawLine;
-              if (line.startsWith("data:")) {
-                line = line.slice(5);
-              }
-
-              const candidate = pending + line;
-
-              if (tryParse(candidate)) {
-                pending = "";
-              } else {
-                pending = candidate;
-              }
-            }
-          };
-
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            processBuffer();
-          }
-
-          // Flush remaining buffer
-          buffer += decoder.decode();
-          processBuffer();
-
-          // Attempt to parse any leftover pending JSON
-          if (pending) {
-            tryParse(pending);
-          }
-
-          const latencyMs = Math.round(performance.now() - started);
-          console.log(`⏱️ Total time: ${latencyMs}ms`);
-          return latencyMs;
-
-        } catch (err) {
-          console.error("🚨 Stream error:", err);
-          onError(err);
-          throw err;
         }
+        
+        console.log(`📝 Extracted ${contentPieces.length} content pieces`);
+        return contentPieces.join('');
       }
 
-      // ---------- Main send logic ----------
       let isSending = false;
 
       async function sendMessage() {
@@ -737,6 +619,7 @@
         const msg = input.value.trim();
         if (!msg) return;
 
+        console.log("📤 Sending message:", msg);
         addUserMessage(msg);
         input.value = "";
         input.focus();
@@ -749,88 +632,16 @@
         sendBtn.disabled = true;
         input.disabled = true;
 
+        const started = performance.now();
+
         try {
           const sessionId = getOrCreateSessionId();
+          console.log("🔑 Session ID:", sessionId);
           
-          // Remove typing indicator once first chunk arrives
-          let firstChunk = true;
-          let botMessage = null;
-
-          const latencyMs = await streamFromN8n(
-            msg,
-            sessionId,
-            (content) => {
-              // First chunk: remove typing indicator and create bot message
-              if (firstChunk) {
-                if (typingIndicator.parentNode) {
-                  typingIndicator.parentNode.removeChild(typingIndicator);
-                }
-                botMessage = createBotMessage();
-                firstChunk = false;
-              }
-              
-              // Append content in real-time
-              if (botMessage && content) {
-                botMessage.appendText(content);
-              }
+          const response = await fetch(N8N_WEBHOOK_URL, {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "Accept": "application/json"
             },
-            (err) => {
-              console.error("Streaming error:", err);
-            }
-          );
-
-          // Finalize the message
-          if (botMessage) {
-            botMessage.finalize(latencyMs);
-          }
-
-        } catch (err) {
-          if (typingIndicator && typingIndicator.parentNode) {
-            typingIndicator.parentNode.removeChild(typingIndicator);
-          }
-          
-          const errorMsg = createBotMessage();
-          errorMsg.appendText("مشکلی پیش آمد. لطفاً دوباره تلاش کنید.");
-          errorMsg.finalize(0);
-          errorMsg.timeDiv.innerHTML = pillHTML("Error", "warn");
-          
-          console.error("Send error:", err);
-        } finally {
-          isSending = false;
-          sendBtn.disabled = false;
-          input.disabled = false;
-        }
-      }
-
-      // ---------- Clear behavior ----------
-      clearBtn.addEventListener("click", function () {
-        if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
-
-        const messages = chatBox.querySelectorAll(".message");
-        messages.forEach(m => m.remove());
-
-        localStorage.removeItem("eveai_sessionId");
-
-        const clearMsg = createBotMessage();
-        clearMsg.appendText("گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.");
-        clearMsg.finalize(0);
-        clearMsg.timeDiv.innerHTML = pillHTML("Cleared", "ok");
-      });
-
-      // ---------- Events ----------
-      sendBtn.addEventListener("click", sendMessage);
-      input.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") sendMessage();
-      });
-
-      quickButtons.forEach(button => {
-        button.addEventListener("click", function () {
-          const question = this.getAttribute("data-question") || "";
-          input.value = question;
-          sendMessage();
-        });
-      });
-    });
-  </script>
-</body>
-</html>
+            body:
