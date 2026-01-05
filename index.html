@@ -603,72 +603,81 @@
       // ---------- STREAMING HANDLER - MANUAL JSON EXTRACTION ----------
       async function streamFromN8n(msg, sessionId, onChunk, onError) {
         const started = performance.now();
-        
+
         try {
           const response = await fetch(N8N_WEBHOOK_URL, {
             method: "POST",
-            headers: { 
+            headers: {
               "Content-Type": "application/json",
-              "Accept": "application/json"
+              "Accept": "text/event-stream, application/x-ndjson, application/json"
             },
             body: JSON.stringify({ msg, sessionId })
           });
 
-          if (!response.ok) {
+          if (!response.ok || !response.body) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
-          const text = await response.text();
-          console.log("📥 Raw response (first 500 chars):", text.substring(0, 500));
-          console.log("📏 Total response length:", text.length);
-          
-          // Manual extraction: find each { and its matching }
-          const objects = [];
-          let i = 0;
-          
-          while (i < text.length) {
-            // Skip whitespace
-            while (i < text.length && /\s/.test(text[i])) i++;
-            
-            if (i >= text.length || text[i] !== '{') break;
-            
-            // Find matching closing brace
-            let depth = 0;
-            let start = i;
-            
-            while (i < text.length) {
-              if (text[i] === '{') depth++;
-              if (text[i] === '}') {
-                depth--;
-                if (depth === 0) {
-                  i++; // include the closing brace
-                  break;
-                }
-              }
-              i++;
-            }
-            
-            const jsonStr = text.substring(start, i);
-            objects.push(jsonStr);
-          }
-          
-          console.log(`📦 Extracted ${objects.length} JSON objects`);
-          
-          // Parse and process each object
-          for (let idx = 0; idx < objects.length; idx++) {
+          const decoder = new TextDecoder("utf-8");
+          const reader = response.body.getReader();
+          let buffer = "";
+          let pending = "";
+
+          const tryParse = (candidate) => {
+            const trimmed = (candidate || "").trim();
+            if (!trimmed) return false;
+
             try {
-              const parsed = JSON.parse(objects[idx]);
-              console.log(`✅ Object ${idx + 1}:`, parsed.type, parsed.content?.substring(0, 30));
-              
+              const parsed = JSON.parse(trimmed);
+              console.log("✅ Parsed:", parsed.type, parsed.content?.substring?.(0, 30));
+
               if (parsed.type === "item" && parsed.content) {
                 onChunk(parsed.content);
               } else if (parsed.type === "end") {
                 console.log("🏁 Stream ended");
-                break;
               }
-            } catch (parseErr) {
-              console.error(`❌ Failed to parse object ${idx + 1}:`, objects[idx].substring(0, 100), parseErr);
+
+              return true;
+            } catch (err) {
+              return false;
             }
+          };
+
+          const processBuffer = () => {
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() || ""; // keep last partial line
+
+            for (const rawLine of lines) {
+              let line = rawLine;
+              if (line.startsWith("data:")) {
+                line = line.slice(5);
+              }
+
+              const candidate = pending + line;
+
+              if (tryParse(candidate)) {
+                pending = "";
+              } else {
+                pending = candidate;
+              }
+            }
+          };
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            processBuffer();
+          }
+
+          // Flush remaining buffer
+          buffer += decoder.decode();
+          processBuffer();
+
+          // Attempt to parse any leftover pending JSON
+          if (pending) {
+            tryParse(pending);
           }
 
           const latencyMs = Math.round(performance.now() - started);
