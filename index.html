@@ -445,200 +445,57 @@
   </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
-
-  const sendBtn = document.getElementById("send-btn");
-  const clearBtn = document.getElementById("clear-btn");
-  const input = document.getElementById("user-input");
-  const quickButtons = document.querySelectorAll(".quick-btn");
-  const chatBox = document.getElementById("chat-box");
-
-  let isSending = false;
-
-  // --- Helpers ---
-  function scrollToBottom(force = false) {
-    const threshold = 160;
-    const atBottom = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < threshold;
-    if (force || atBottom) chatBox.scrollTop = chatBox.scrollHeight;
-  }
-
-  function escapeHTML(str) {
-    return String(str).replace(/[&<>"']/g, (s) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    }[s]));
-  }
-
-  function renderMarkdownLiteToHTML(rawText) {
-    const text = (rawText == null) ? "" : String(rawText);
-    let safe = escapeHTML(text);
-    safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-    safe = safe.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
-    return safe;
-  }
-
-  function detectDir(text) {
-    const s = (text == null) ? "" : String(text);
-    const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-    const ltrRe = /[A-Za-z]/;
-    for (const ch of s) {
-      if (/\s/.test(ch)) continue;
-      if (rtlRe.test(ch)) return "rtl";
-      if (ltrRe.test(ch)) return "ltr";
-    }
-    return document.documentElement.dir || "rtl";
-  }
-
-  function timeHHMM() {
-    const d = new Date();
-    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-  }
-
-  function getOrCreateSessionId() {
-    let s = localStorage.getItem("eveai_sessionId");
-    if (!s) {
-      s = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + "_" + Math.random().toString(16).slice(2));
-      localStorage.setItem("eveai_sessionId", s);
-    }
-    return s;
-  }
-
-  function addMessage({ text, sender, typing = false }) {
-    const container = document.createElement("div");
-    container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
-
-    const msgText = document.createElement("div");
-    msgText.className = "message-text";
-
-    if (sender === "user") {
-      msgText.textContent = (text == null) ? "" : String(text);
-      container.classList.add("msg-rtl");
-      container.appendChild(msgText);
-    } else {
-      const dir = detectDir(text);
-      container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
-
-      const pre = document.createElement("div");
-      pre.className = "rendered-answer";
-      pre.innerHTML = renderMarkdownLiteToHTML(text || "");
-
-      msgText.appendChild(pre);
-
-      let caret = null;
-      if (typing) {
-        caret = document.createElement("span");
-        caret.className = "typing-caret";
-        caret.textContent = "▍";
-        msgText.appendChild(caret);
-      }
-
-      container.appendChild(msgText);
-      container.__typing = { pre, caret, rawText: String(text || "") };
-    }
-
-    const timeDiv = document.createElement("div");
-    timeDiv.className = "message-time";
-    timeDiv.textContent = timeHHMM();
-    container.appendChild(timeDiv);
-
-    chatBox.appendChild(container);
-    scrollToBottom(true);
-    return container;
-  }
-
-  /**
-   * Extracts complete JSON objects from a stream buffer.
-   * Handles concatenated objects: {...}{...} AND objects split across chunks.
-   * Also handles optional "data:" prefix lines and [DONE].
-   */
-  function extractStreamObjects(buffer) {
-    const items = [];
-    let i = 0;
+  function extractJsonObjects(buffer) {
+    const objs = [];
+    let inStr = false, esc = false, depth = 0, start = -1;
     let lastConsumed = 0;
 
-    // Fast path: remove any BOM
-    if (buffer.charCodeAt(0) === 0xFEFF) buffer = buffer.slice(1);
+    for (let i = 0; i < buffer.length; i++) {
+      const ch = buffer[i];
 
-    while (i < buffer.length) {
-      // Skip whitespace/newlines
-      while (i < buffer.length && /\s/.test(buffer[i])) i++;
+      // Optional SSE: skip "data:" prefix anywhere in the stream
+      // (we do it as a cheap cleanup before parsing objects)
+      // NOTE: We don't delete it here char-by-char; we handle it below when parsing each object string.
 
-      // Optional SSE "data:" prefix
-      if (buffer.startsWith("data:", i)) {
-        i += 5;
-        while (i < buffer.length && buffer[i] === " ") i++;
-      }
-
-      // Handle [DONE]
-      if (buffer.startsWith("[DONE]", i)) {
-        items.push({ kind: "done" });
-        i += 6;
-        lastConsumed = i;
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === "\\") esc = true;
+        else if (ch === '"') inStr = false;
         continue;
-      }
+      } else {
+        if (ch === '"') { inStr = true; continue; }
 
-      // We only care about JSON objects starting with {
-      if (i >= buffer.length || buffer[i] !== "{") break;
-
-      const start = i;
-      let depth = 0;
-      let inStr = false;
-      let esc = false;
-
-      while (i < buffer.length) {
-        const ch = buffer[i];
-
-        if (inStr) {
-          if (esc) esc = false;
-          else if (ch === "\\") esc = true;
-          else if (ch === '"') inStr = false;
-          i++;
+        if (ch === "{") {
+          if (depth === 0) start = i;
+          depth++;
           continue;
         }
 
-        if (ch === '"') { inStr = true; i++; continue; }
-        if (ch === "{") { depth++; i++; continue; }
         if (ch === "}") {
-          depth--;
-          i++;
-          if (depth === 0) {
-            const jsonStr = buffer.slice(start, i);
-            items.push({ kind: "json", jsonStr });
-            lastConsumed = i;
-            break;
+          if (depth > 0) depth--;
+          if (depth === 0 && start !== -1) {
+            objs.push(buffer.slice(start, i + 1));
+            lastConsumed = i + 1;
+            start = -1;
           }
-          continue;
         }
-
-        i++;
       }
-
-      // If we exited because we ran out of buffer while inside an object → incomplete
-      if (depth !== 0) break;
     }
 
-    return { items, remainder: buffer.slice(lastConsumed) };
+    return { objs, remainder: buffer.slice(lastConsumed) };
   }
 
-  async function streamFromN8n({ msg, sessionId, onToken, onDone }) {
-    const ctrl = new AbortController();
-
-    const res = await fetch(N8N_WEBHOOK_URL, {
+  async function streamFromN8n(url, payload, onToken, onEnd) {
+    const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept": "*/*",
-        // This discourages intermediary caches; doesn't fix buffering proxies, but helps.
         "Cache-Control": "no-cache",
         "Pragma": "no-cache",
       },
-      body: JSON.stringify({ msg, sessionId }),
+      body: JSON.stringify(payload),
       cache: "no-store",
-      signal: ctrl.signal,
     });
 
     if (!res.ok) {
@@ -646,162 +503,72 @@ document.addEventListener("DOMContentLoaded", function () {
       throw new Error(`HTTP ${res.status} ${res.statusText} :: ${t.slice(0, 200)}`);
     }
 
-    // If streaming is blocked by environment, we may get no ReadableStream.
+    // If browser/proxy buffers and no streaming body is exposed:
     if (!res.body) {
       const full = await res.text();
-      parseFullText(full, onToken, onDone);
+      processText(full);
+      onEnd?.();
       return;
     }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
-    let ended = false;
 
     while (true) {
-      const { value, done } = await reader.read();
+      const { done, value } = await reader.read();
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
 
-      const { items, remainder } = extractStreamObjects(buffer);
+      const { objs, remainder } = extractJsonObjects(buffer);
       buffer = remainder;
 
-      for (const it of items) {
-        if (it.kind === "done") {
-          ended = true;
-          onDone();
-          try { ctrl.abort(); } catch {}
+      for (const raw of objs) {
+        const obj = safeParse(raw);
+        if (!obj) continue;
+
+        if (obj.type === "item" && typeof obj.content === "string") {
+          if (obj.content) {
+            // ✅ DEBUG: confirm live tokens arrive
+            // console.log("TOKEN:", JSON.stringify(obj.content));
+            onToken(obj.content);
+          }
+        }
+
+        if (obj.type === "end") {
+          onEnd?.();
           return;
         }
-        if (it.kind === "json") {
-          let obj;
-          try { obj = JSON.parse(it.jsonStr); } catch { continue; }
-
-          if (obj?.type === "item" && typeof obj.content === "string") {
-            // ✅ n8n streaming token
-            if (obj.content) onToken(obj.content);
-          } else if (obj?.type === "end") {
-            ended = true;
-            onDone();
-            try { ctrl.abort(); } catch {}
-            return;
-          }
-        }
       }
     }
 
-    // End of stream: try parse what remains
-    if (!ended) parseFullText(buffer, onToken, onDone);
-  }
+    // Process any final remainder
+    processText(buffer);
+    onEnd?.();
 
-  function parseFullText(text, onToken, onDone) {
-    if (!text) { onDone(); return; }
-
-    // Extract everything we can from concatenated JSON or SSE-like payload
-    let buffer = String(text);
-    while (buffer && buffer.length) {
-      const { items, remainder } = extractStreamObjects(buffer);
-      buffer = remainder;
-
-      if (!items.length) break;
-
-      for (const it of items) {
-        if (it.kind === "done") { onDone(); return; }
-        if (it.kind === "json") {
-          try {
-            const obj = JSON.parse(it.jsonStr);
-            if (obj?.type === "item" && typeof obj.content === "string" && obj.content) onToken(obj.content);
-            if (obj?.type === "end") { onDone(); return; }
-          } catch {}
-        }
+    function processText(text) {
+      if (!text) return;
+      const { objs } = extractJsonObjects(text);
+      for (const raw of objs) {
+        const obj = safeParse(raw);
+        if (!obj) continue;
+        if (obj.type === "item" && typeof obj.content === "string" && obj.content) onToken(obj.content);
       }
     }
-    onDone();
-  }
 
-  async function sendMessage() {
-    if (isSending) return;
-
-    const msg = input.value.trim();
-    if (!msg) return;
-
-    isSending = true;
-    input.value = "";
-    input.disabled = true;
-    sendBtn.disabled = true;
-
-    addMessage({ text: msg, sender: "user" });
-
-    const botMsg = addMessage({ text: "", sender: "bot", typing: true });
-    const t = botMsg.__typing;
-
-    let dirLocked = false;
-    let receivedAny = false;
-
-    try {
-      const sessionId = getOrCreateSessionId();
-
-      await streamFromN8n({
-        msg,
-        sessionId,
-        onToken: (token) => {
-          receivedAny = true;
-
-          // Lock direction once we see the first non-space token
-          if (!dirLocked && token && token.trim()) {
-            const dir = detectDir(token);
-            botMsg.classList.remove("msg-rtl", "msg-ltr");
-            botMsg.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
-            dirLocked = true;
-          }
-
-          t.rawText += token;
-          t.pre.innerHTML = renderMarkdownLiteToHTML(t.rawText);
-          scrollToBottom(false);
-        },
-        onDone: () => {}
-      });
-
-      if (t.caret) t.caret.remove();
-
-      if (!t.rawText.trim()) {
-        t.pre.innerHTML = "پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.";
+    function safeParse(s) {
+      try {
+        let clean = s.trim();
+        if (clean.startsWith("data:")) clean = clean.slice(5).trim();
+        if (clean === "[DONE]") return { type: "end" };
+        return JSON.parse(clean);
+      } catch {
+        return null;
       }
-    } catch (err) {
-      console.error("Chat Error:", err);
-      if (t.caret) t.caret.remove();
-
-      if (!receivedAny) {
-        t.pre.innerHTML = "خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.";
-      } else {
-        t.pre.innerHTML = renderMarkdownLiteToHTML(t.rawText + "\n\n[ارتباط قطع شد — اگر لازم بود دوباره ارسال کنید]");
-      }
-    } finally {
-      isSending = false;
-      input.disabled = false;
-      sendBtn.disabled = false;
-      input.focus();
-      scrollToBottom(false);
     }
   }
-
-  sendBtn.addEventListener("click", sendMessage);
-  input.addEventListener("keydown", (e) => { if (e.key === "Enter") sendMessage(); });
-
-  clearBtn.addEventListener("click", () => {
-    if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
-    chatBox.innerHTML = "";
-    localStorage.removeItem("eveai_sessionId");
-  });
-
-  quickButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      input.value = btn.getAttribute("data-question") || "";
-      sendMessage();
-    });
-  });
-});
 </script>
+
 </body>
 </html>
