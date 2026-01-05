@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>گپ و گفت مادرانه - راهنمای شیردهی</title>
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Lalezar&display=swap" rel="stylesheet">
 
@@ -12,20 +11,27 @@
     :root{
       --bg1:#fff7fb;
       --bg2:#f1f7ff;
+      --card:#ffffff;
       --ink:#1f2937;
+      --muted:#6b7280;
+
       --p1:#a855f7;
       --p2:#8b5cf6;
+      --p3:#ec4899;
+
+      --line:#efe6ff;
       --soft:#faf7ff;
+
       --shadow: 0 18px 55px rgba(88, 28, 135, 0.14);
       --shadow2: 0 10px 25px rgba(17, 24, 39, 0.06);
+
       --r-lg:22px;
       --r-md:16px;
+      --r-sm:12px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
-
-    /* ✅ stop whole-page scroll; only chat scrolls */
     body {
       font-family: 'Vazirmatn', sans-serif;
       direction: rtl;
@@ -35,32 +41,21 @@
         radial-gradient(1000px 500px at 90% 0%, rgba(34,197,94,0.10), transparent 55%),
         radial-gradient(1100px 600px at 60% 110%, rgba(236,72,153,0.12), transparent 60%),
         linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
-      overflow: hidden;
+      overflow-x: hidden;
     }
-
     ::selection{ background: rgba(168,85,247,0.25); }
-
-    .page {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: 16px;
-      gap: 12px;
-      min-height: 0;
-    }
 
     .header-decoration {
       height: 6px;
       background: linear-gradient(to left, #6fd2ff, #a18aff, #ff9cee);
       border-radius: 0 0 10px 10px;
       box-shadow: 0 8px 20px rgba(168,85,247,0.15);
-      flex: 0 0 auto;
     }
 
     .chat-container {
       width: 920px;
-      max-width: 100%;
-      margin: 0 auto;
+      max-width: 95%;
+      margin: 22px auto;
       background: rgba(255,255,255,0.80);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -70,9 +65,8 @@
       flex-direction: column;
       overflow: hidden;
       border: 1px solid rgba(239,230,255,0.9);
+      min-height: 90vh;
       position: relative;
-      flex: 1 1 auto;
-      min-height: 0;
     }
 
     .chat-container::before{
@@ -82,16 +76,6 @@
       pointer-events:none;
       background: linear-gradient(180deg, rgba(168,85,247,0.10), transparent 22%, transparent 78%, rgba(34,197,94,0.06));
       opacity: 0.8;
-      z-index: 0;
-    }
-
-    /* ✅ Sticky header + quick actions */
-    .sticky-top {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
     }
 
     .chat-header {
@@ -102,11 +86,21 @@
       padding: 18px 18px 16px;
       text-align: center;
       font-family: 'Lalezar', cursive;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 14px;
+      z-index: 1;
       border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .chat-header::after{
+      content:"";
+      position:absolute;
+      bottom:0; left:0; right:0;
+      height: 1px;
+      background: linear-gradient(to left, rgba(255,255,255,0.35), rgba(255,255,255,0.08), rgba(255,255,255,0.35));
+      opacity: 0.9;
     }
     .chat-header i {
       font-size: 26px;
@@ -127,9 +121,10 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      padding: 12px 14px 10px;
+      padding: 12px 14px 8px;
       background: rgba(252,250,255,0.92);
       border-bottom: 1px solid rgba(239,230,255,0.8);
+      z-index: 1;
     }
     .quick-btn {
       padding: 10px 14px;
@@ -147,20 +142,15 @@
       align-items: center;
       gap: 8px;
       box-shadow: 0 10px 18px rgba(17,24,39,0.05);
-      user-select: none;
     }
     .quick-btn i{ color: rgba(168,85,247,0.95); }
     .quick-btn:hover { transform: translateY(-2px); border-color: rgba(168,85,247,0.45); }
 
-    /* ✅ ONLY this scrolls */
     .chat-box {
-      position: relative;
-      z-index: 1;
-      flex: 1 1 auto;
-      min-height: 0;
+      flex: 1;
+      height: 520px;
       overflow-y: auto;
-      overflow-x: hidden;
-      padding: 18px 16px 22px 18px;
+      padding: 20px 16px 22px 18px;
       background:
         radial-gradient(700px 260px at 80% 0%, rgba(168,85,247,0.08), transparent 60%),
         radial-gradient(700px 260px at 10% 100%, rgba(34,197,94,0.06), transparent 60%),
@@ -168,13 +158,9 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
-      scroll-behavior: smooth;
+      overflow-x: hidden;
+      z-index: 1;
     }
-
-    .chat-box::-webkit-scrollbar { width: 10px; }
-    .chat-box::-webkit-scrollbar-track { background: rgba(233,213,255,0.25); border-radius: 999px; }
-    .chat-box::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.45); border-radius: 999px; }
-    .chat-box::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.65); }
 
     .welcome-message {
       background:
@@ -279,7 +265,11 @@
     .msg-rtl { direction: rtl; text-align: right; }
     .msg-ltr { direction: ltr; text-align: left; }
 
-    .rendered-answer { unicode-bidi: plaintext; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .rendered-answer {
+      unicode-bidi: plaintext;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
 
     .typing-caret {
       display: inline-block;
@@ -289,7 +279,6 @@
       animation: caretBlink 0.9s infinite;
       color: rgba(109,40,217,0.95);
       font-weight: 800;
-      vertical-align: baseline;
     }
     @keyframes caretBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
 
@@ -301,19 +290,28 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      flex-wrap: wrap;
     }
     .user-message .message-time { color: rgba(255,255,255,0.92); justify-content: flex-start; }
     .bot-message .message-time  { justify-content: flex-end; }
 
+    .pill {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(233,213,255,0.9);
+      background: rgba(243,232,255,0.7);
+      color: #6d28d9;
+    }
+    .pill.ok { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.10); color: #166534; }
+    .pill.warn { border-color: rgba(249,115,22,0.25); background: rgba(249,115,22,0.10); color: #9a3412; }
+
     .input-area {
-      z-index: 2;
       display: flex;
       gap: 10px;
       padding: 16px 16px 18px;
       border-top: 1px solid rgba(239,230,255,0.95);
       background: linear-gradient(180deg, rgba(252,250,255,0.96) 0%, rgba(250,247,255,0.92) 100%);
-      flex: 0 0 auto;
+      z-index: 1;
     }
     input {
       flex: 1;
@@ -361,10 +359,9 @@
       color: #fff;
     }
     button#clear-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(249, 115, 22, 0.22); }
-    button:disabled{ opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    button:disabled{ opacity: 0.6; cursor: not-allowed; transform: none !important; filter: none !important; box-shadow: none !important; }
 
     .footer-info {
-      z-index: 2;
       text-align: center;
       padding: 13px 16px;
       font-size: 13px;
@@ -376,13 +373,39 @@
       align-items: center;
       gap: 18px;
       flex-wrap: wrap;
-      flex: 0 0 auto;
+      z-index: 1;
     }
     .footer-info i { color: rgba(168,85,247,0.95); }
 
+    .typing-indicator {
+      display: flex;
+      padding: 14px 14px;
+      background: linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(240,249,255,0.88) 100%);
+      border: 1px solid rgba(233,213,255,0.9);
+      border-radius: 18px;
+      width: fit-content;
+      margin-right: auto;
+      margin-left: 44px;
+      align-items: center;
+      gap: 10px;
+      min-width: 160px;
+      box-shadow: 0 12px 22px rgba(88, 28, 135, 0.08);
+    }
+    .typing-text { color: #6d28d9; font-size: 14px; font-weight: 600; }
+    .typing-dots { display: flex; gap: 6px; }
+    .typing-dots span {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(168,85,247,0.95), rgba(139,92,246,0.9));
+      animation: dots 1.4s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dots { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+
     @media (max-width: 768px) {
-      .page { padding: 10px; gap: 10px; }
-      .chat-container { border-radius: 18px; }
+      .chat-container { margin: 10px auto; border-radius: 18px; }
+      .chat-box { height: 450px; padding: 14px 10px 18px 12px; }
       .message { max-width: 88%; margin-right: 0 !important; margin-left: 0 !important; }
       .input-area { flex-direction: column; padding: 14px; }
       button { width: 100%; }
@@ -393,182 +416,366 @@
 </head>
 
 <body>
-  <div class="page">
-    <div class="header-decoration"></div>
+  <div class="header-decoration"></div>
 
-    <div class="chat-container">
-      <div class="sticky-top">
-        <div class="chat-header">
-          <i class="fas fa-heart"></i>
-          <div>
-            گپ و گفت مادرانه
-            <div class="header-subtitle">پرسش و پاسخ تخصصی درباره شیردهی و مراقبت از نوزاد</div>
-          </div>
-          <i class="fas fa-baby"></i>
-        </div>
-
-        <div class="quick-actions">
-          <button class="quick-btn" data-question="مشکلات شیردهی چیست؟"><i class="fas fa-question-circle"></i> مشکلات شیردهی</button>
-          <button class="quick-btn" data-question="فواید شیر مادر چیست؟"><i class="fas fa-heartbeat"></i> فواید شیر مادر</button>
-          <button class="quick-btn" data-question="راههای افزایش شیر مادر چیست؟"><i class="fas fa-plus-circle"></i> افزایش شیر</button>
-          <button class="quick-btn" data-question="تغذیه مادر شیرده"><i class="fas fa-apple-alt"></i> تغذیه مادر</button>
-          <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk while breastfeeding?"><i class="fas fa-language"></i> English test</button>
-          <button class="quick-btn" data-question="كيف أعرف أن طفلي يحصل على ما يكفي من الحليب أثناء الرضاعة؟"><i class="fas fa-language"></i> Arabic test</button>
-        </div>
+  <div class="chat-container">
+    <div class="chat-header">
+      <i class="fas fa-heart"></i>
+      <div>
+        گپ و گفت مادرانه
+        <div class="header-subtitle">پرسش و پاسخ تخصصی درباره شیردهی و مراقبت از نوزاد</div>
       </div>
+      <i class="fas fa-baby"></i>
+    </div>
 
-      <div id="chat-box" class="chat-box">
-        <div class="welcome-message">
-          <div class="welcome-title">
-            <i class="fas fa-hands-helping"></i>
-            خوش آمدید مادر عزیز!
-            <i class="fas fa-hands-helping"></i>
-          </div>
-          <div class="welcome-text">
-            اینجا فضایی امن برای پرسش‌های شما درباره شیردهی و مراقبت از نوزاد است. می‌توانید سوالات خود را مطرح کنید یا از دکمه‌های سریع بالا استفاده نمایید.
-          </div>
+    <div class="quick-actions">
+      <button class="quick-btn" data-question="مشکلات شیردهی چیست؟"><i class="fas fa-question-circle"></i> مشکلات شیردهی</button>
+      <button class="quick-btn" data-question="فواید شیر مادر چیست؟"><i class="fas fa-heartbeat"></i> فواید شیر مادر</button>
+      <button class="quick-btn" data-question="راههای افزایش شیر مادر چیست؟"><i class="fas fa-plus-circle"></i> افزایش شیر</button>
+      <button class="quick-btn" data-question="تغذیه مادر شیرده"><i class="fas fa-apple-alt"></i> تغذیه مادر</button>
+      <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk?"><i class="fas fa-language"></i> English test</button>
+    </div>
+
+    <div id="chat-box" class="chat-box">
+      <div class="welcome-message">
+        <div class="welcome-title">
+          <i class="fas fa-hands-helping"></i>
+          خوش آمدید مادر عزیز!
+          <i class="fas fa-hands-helping"></i>
+        </div>
+        <div class="welcome-text">
+          اینجا فضایی امن برای پرسش‌های شما درباره شیردهی و مراقبت از نوزاد است. می‌توانید سوالات خود را مطرح کنید یا از دکمه‌های سریع بالا استفاده نمایید.
         </div>
       </div>
+    </div>
 
-      <div class="input-area">
-        <input id="user-input" type="text" placeholder="سوال خود درباره شیردهی، تغذیه نوزاد یا مراقبت‌های پس از زایمان را اینجا بنویسید..." />
-        <button id="send-btn"><i class="fas fa-paper-plane"></i> ارسال</button>
-        <button id="clear-btn"><i class="fas fa-trash-alt"></i> پاک‌کردن</button>
-      </div>
+    <div class="input-area">
+      <input id="user-input" type="text" placeholder="سوال خود درباره شیردهی، تغذیه نوزاد یا مراقبت‌های پس از زایمان را اینجا بنویسید..." />
+      <button id="send-btn"><i class="fas fa-paper-plane"></i> ارسال</button>
+      <button id="clear-btn"><i class="fas fa-trash-alt"></i> پاک‌کردن</button>
+    </div>
 
-      <div class="footer-info">
-        <div><i class="fas fa-shield-alt"></i> اطلاعات شما محرمانه می‌ماند</div>
-        <div><i class="fas fa-users"></i> پاسخ‌ها توسط مشاوران شیردهی بررسی می‌شوند</div>
-        <div><i class="fas fa-clock"></i> پاسخگویی ۲۴ ساعته</div>
-      </div>
+    <div class="footer-info">
+      <div><i class="fas fa-shield-alt"></i> اطلاعات شما محرمانه می‌ماند</div>
+      <div><i class="fas fa-users"></i> پاسخ‌ها توسط مشاوران شیردهی بررسی می‌شوند</div>
+      <div><i class="fas fa-clock"></i> پاسخگویی ۲۴ ساعته</div>
     </div>
   </div>
 
-<script>
-  function extractJsonObjects(buffer) {
-    const objs = [];
-    let inStr = false, esc = false, depth = 0, start = -1;
-    let lastConsumed = 0;
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
-    for (let i = 0; i < buffer.length; i++) {
-      const ch = buffer[i];
+      const sendBtn = document.getElementById("send-btn");
+      const clearBtn = document.getElementById("clear-btn");
+      const input = document.getElementById("user-input");
+      const quickButtons = document.querySelectorAll(".quick-btn");
+      const chatBox = document.getElementById("chat-box");
 
-      // Optional SSE: skip "data:" prefix anywhere in the stream
-      // (we do it as a cheap cleanup before parsing objects)
-      // NOTE: We don't delete it here char-by-char; we handle it below when parsing each object string.
+      // ---------- Utilities ----------
+      function scrollToBottom() { 
+        chatBox.scrollTop = chatBox.scrollHeight; 
+      }
 
-      if (inStr) {
-        if (esc) esc = false;
-        else if (ch === "\\") esc = true;
-        else if (ch === '"') inStr = false;
-        continue;
-      } else {
-        if (ch === '"') { inStr = true; continue; }
+      function escapeHTML(str) {
+        return String(str).replace(/[&<>"'`=\/]/g, (s) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;",
+          "'": "&#39;", "`": "&#x60;", "=": "&#x3D;", "/": "&#x2F;"
+        })[s]);
+      }
 
-        if (ch === "{") {
-          if (depth === 0) start = i;
-          depth++;
-          continue;
+      function renderMarkdownLite(text) {
+        let safe = escapeHTML(text || "");
+        safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        safe = safe.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
+        return safe;
+      }
+
+      function detectDir(text) {
+        const s = String(text || "");
+        const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+        const ltrRe = /[A-Za-z]/;
+        for (const ch of s) {
+          if (/\s/.test(ch)) continue;
+          if (rtlRe.test(ch)) return "rtl";
+          if (ltrRe.test(ch)) return "ltr";
         }
+        return "rtl";
+      }
 
-        if (ch === "}") {
-          if (depth > 0) depth--;
-          if (depth === 0 && start !== -1) {
-            objs.push(buffer.slice(start, i + 1));
-            lastConsumed = i + 1;
-            start = -1;
+      function getOrCreateSessionId() {
+        let sessionId = localStorage.getItem("eveai_sessionId");
+        if (!sessionId) {
+          sessionId = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+          localStorage.setItem("eveai_sessionId", sessionId);
+        }
+        return sessionId;
+      }
+
+      function timeHHMM() {
+        const t = new Date();
+        return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`;
+      }
+
+      function pillHTML(label, cls) {
+        return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
+      }
+
+      // ---------- Message creation ----------
+      function addUserMessage(text) {
+        const container = document.createElement("div");
+        container.className = "message user-message msg-rtl";
+
+        const msgText = document.createElement("div");
+        msgText.className = "message-text";
+        msgText.textContent = text;
+        container.appendChild(msgText);
+
+        const timeDiv = document.createElement("div");
+        timeDiv.className = "message-time";
+        timeDiv.textContent = timeHHMM();
+        container.appendChild(timeDiv);
+
+        chatBox.appendChild(container);
+        scrollToBottom();
+      }
+
+      function createBotMessage() {
+        const container = document.createElement("div");
+        container.className = "message bot-message";
+
+        const msgText = document.createElement("div");
+        msgText.className = "message-text";
+        
+        const rendered = document.createElement("div");
+        rendered.className = "rendered-answer";
+        rendered.style.whiteSpace = "pre-wrap";
+        
+        const caret = document.createElement("span");
+        caret.className = "typing-caret";
+        caret.textContent = "▍";
+
+        rendered.appendChild(caret);
+        msgText.appendChild(rendered);
+        container.appendChild(msgText);
+
+        const timeDiv = document.createElement("div");
+        timeDiv.className = "message-time";
+        container.appendChild(timeDiv);
+
+        chatBox.appendChild(container);
+        scrollToBottom();
+
+        return {
+          container,
+          rendered,
+          caret,
+          timeDiv,
+          appendText: (text) => {
+            const textNode = document.createTextNode(text);
+            rendered.insertBefore(textNode, caret);
+            scrollToBottom();
+          },
+          finalize: (latencyMs) => {
+            caret.remove();
+            const dir = detectDir(rendered.textContent);
+            container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
+            
+            const pill = latencyMs < 8000
+              ? { label: `⏱ ${latencyMs}ms`, cls: "ok" }
+              : { label: `⏱ ${Math.round(latencyMs/1000)}s`, cls: "warn" };
+            
+            timeDiv.innerHTML = pillHTML(pill.label, pill.cls) + " " + pillHTML(timeHHMM(), "");
           }
+        };
+      }
+
+      function createTypingIndicator() {
+        const typingDiv = document.createElement("div");
+        typingDiv.className = "typing-indicator";
+        typingDiv.innerHTML = `
+          <div class="typing-text">در حال دریافت پاسخ...</div>
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+        `;
+        return typingDiv;
+      }
+
+      // ---------- STREAMING HANDLER - THE FIX! ----------
+      async function streamFromN8n(msg, sessionId, onChunk, onError) {
+        const started = performance.now();
+        
+        try {
+          const response = await fetch(N8N_WEBHOOK_URL, {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({ msg, sessionId })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            
+            // Process complete JSON objects from buffer
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || trimmed.startsWith('{') === false) continue;
+
+              try {
+                const parsed = JSON.parse(trimmed);
+                
+                // Handle n8n streaming format
+                if (parsed.type === "item" && parsed.content) {
+                  onChunk(parsed.content);
+                } else if (parsed.type === "end") {
+                  // Stream completed
+                  break;
+                }
+              } catch (parseErr) {
+                console.warn("Failed to parse chunk:", trimmed);
+              }
+            }
+          }
+
+          // Process any remaining buffer
+          if (buffer.trim()) {
+            try {
+              const parsed = JSON.parse(buffer.trim());
+              if (parsed.type === "item" && parsed.content) {
+                onChunk(parsed.content);
+              }
+            } catch (err) {
+              console.warn("Failed to parse final buffer:", buffer);
+            }
+          }
+
+          const latencyMs = Math.round(performance.now() - started);
+          return latencyMs;
+
+        } catch (err) {
+          onError(err);
+          throw err;
         }
       }
-    }
 
-    return { objs, remainder: buffer.slice(lastConsumed) };
-  }
+      // ---------- Main send logic ----------
+      let isSending = false;
 
-  async function streamFromN8n(url, payload, onToken, onEnd) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "*/*",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store",
+      async function sendMessage() {
+        if (isSending) return;
+
+        const msg = input.value.trim();
+        if (!msg) return;
+
+        addUserMessage(msg);
+        input.value = "";
+        input.focus();
+
+        const typingIndicator = createTypingIndicator();
+        chatBox.appendChild(typingIndicator);
+        scrollToBottom();
+
+        isSending = true;
+        sendBtn.disabled = true;
+        input.disabled = true;
+
+        try {
+          const sessionId = getOrCreateSessionId();
+          
+          // Remove typing indicator once first chunk arrives
+          let firstChunk = true;
+          let botMessage = null;
+
+          const latencyMs = await streamFromN8n(
+            msg,
+            sessionId,
+            (content) => {
+              // First chunk: remove typing indicator and create bot message
+              if (firstChunk) {
+                if (typingIndicator.parentNode) {
+                  typingIndicator.parentNode.removeChild(typingIndicator);
+                }
+                botMessage = createBotMessage();
+                firstChunk = false;
+              }
+              
+              // Append content in real-time
+              if (botMessage && content) {
+                botMessage.appendText(content);
+              }
+            },
+            (err) => {
+              console.error("Streaming error:", err);
+            }
+          );
+
+          // Finalize the message
+          if (botMessage) {
+            botMessage.finalize(latencyMs);
+          }
+
+        } catch (err) {
+          if (typingIndicator && typingIndicator.parentNode) {
+            typingIndicator.parentNode.removeChild(typingIndicator);
+          }
+          
+          const errorMsg = createBotMessage();
+          errorMsg.appendText("مشکلی پیش آمد. لطفاً دوباره تلاش کنید.");
+          errorMsg.finalize(0);
+          errorMsg.timeDiv.innerHTML = pillHTML("Error", "warn");
+          
+          console.error("Send error:", err);
+        } finally {
+          isSending = false;
+          sendBtn.disabled = false;
+          input.disabled = false;
+        }
+      }
+
+      // ---------- Clear behavior ----------
+      clearBtn.addEventListener("click", function () {
+        if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
+
+        const messages = chatBox.querySelectorAll(".message");
+        messages.forEach(m => m.remove());
+
+        localStorage.removeItem("eveai_sessionId");
+
+        const clearMsg = createBotMessage();
+        clearMsg.appendText("گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.");
+        clearMsg.finalize(0);
+        clearMsg.timeDiv.innerHTML = pillHTML("Cleared", "ok");
+      });
+
+      // ---------- Events ----------
+      sendBtn.addEventListener("click", sendMessage);
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") sendMessage();
+      });
+
+      quickButtons.forEach(button => {
+        button.addEventListener("click", function () {
+          const question = this.getAttribute("data-question") || "";
+          input.value = question;
+          sendMessage();
+        });
+      });
     });
-
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status} ${res.statusText} :: ${t.slice(0, 200)}`);
-    }
-
-    // If browser/proxy buffers and no streaming body is exposed:
-    if (!res.body) {
-      const full = await res.text();
-      processText(full);
-      onEnd?.();
-      return;
-    }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-
-      const { objs, remainder } = extractJsonObjects(buffer);
-      buffer = remainder;
-
-      for (const raw of objs) {
-        const obj = safeParse(raw);
-        if (!obj) continue;
-
-        if (obj.type === "item" && typeof obj.content === "string") {
-          if (obj.content) {
-            // ✅ DEBUG: confirm live tokens arrive
-            // console.log("TOKEN:", JSON.stringify(obj.content));
-            onToken(obj.content);
-          }
-        }
-
-        if (obj.type === "end") {
-          onEnd?.();
-          return;
-        }
-      }
-    }
-
-    // Process any final remainder
-    processText(buffer);
-    onEnd?.();
-
-    function processText(text) {
-      if (!text) return;
-      const { objs } = extractJsonObjects(text);
-      for (const raw of objs) {
-        const obj = safeParse(raw);
-        if (!obj) continue;
-        if (obj.type === "item" && typeof obj.content === "string" && obj.content) onToken(obj.content);
-      }
-    }
-
-    function safeParse(s) {
-      try {
-        let clean = s.trim();
-        if (clean.startsWith("data:")) clean = clean.slice(5).trim();
-        if (clean === "[DONE]") return { type: "end" };
-        return JSON.parse(clean);
-      } catch {
-        return null;
-      }
-    }
-  }
-</script>
-
+  </script>
 </body>
 </html>
