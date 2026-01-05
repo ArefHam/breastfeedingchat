@@ -485,6 +485,7 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
+      // ✅ YOUR n8n WEBHOOK URL
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
       const sendBtn = document.getElementById("send-btn");
@@ -495,6 +496,7 @@
 
       let isSending = false;
 
+      // --- Helpers ---
       function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
 
       function escapeHTML(str) {
@@ -541,25 +543,12 @@
         return sessionId;
       }
 
-      function createTypingIndicator() {
-        const typingDiv = document.createElement("div");
-        typingDiv.className = "typing-indicator";
-        typingDiv.innerHTML = `
-          <div class="typing-text">در حال دریافت پاسخ...</div>
-          <div class="typing-dots"><span></span><span></span><span></span></div>
-        `;
-        return typingDiv;
-      }
-
       function timeHHMM() {
         const t = new Date();
         return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`;
       }
 
-      function pillHTML(label, cls) {
-        return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
-      }
-
+      // --- UI Builder ---
       function addMessage({ text, sender, metaPills = [], typing = false }) {
         const container = document.createElement("div");
         container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
@@ -572,6 +561,7 @@
           container.classList.add("msg-rtl");
           container.appendChild(msgText);
         } else {
+          // Bot message with rendering area
           const dir = detectDir(text);
           container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
 
@@ -594,16 +584,13 @@
           msgText.appendChild(wrap);
           container.appendChild(msgText);
 
+          // Save references for streaming updates
           container.__typing = { pre, caret, rawText: String(text || "") };
         }
 
         const timeDiv = document.createElement("div");
         timeDiv.className = "message-time";
-        if (sender === "bot" && metaPills.length) {
-          timeDiv.innerHTML = metaPills.map(p => pillHTML(p.label, p.cls)).join(" ");
-        } else {
-          timeDiv.textContent = timeHHMM();
-        }
+        timeDiv.textContent = timeHHMM();
         container.appendChild(timeDiv);
 
         chatBox.appendChild(container);
@@ -612,232 +599,109 @@
         return container;
       }
 
-      function extractAnswerFlexible(data) {
-        // 1) string
-        if (typeof data === "string") return data;
-
-        // 2) common fields
-        if (data && typeof data === "object") {
-          const direct = data.answer ?? data.response ?? data.text ?? data.output;
-          if (typeof direct === "string") return direct;
-
-          // 3) "All Incoming Items" may return array
-          if (Array.isArray(data)) {
-            const first = data[0];
-            const v = first?.answer ?? first?.response ?? first?.text ?? first?.output;
-            if (typeof v === "string") return v;
-            // if array of items, try join any string outputs
-            const collected = data.map(x => x?.output).filter(x => typeof x === "string");
-            if (collected.length) return collected.join("\n\n");
-          }
-        }
-
-        try { return JSON.stringify(data, null, 2); } catch { return String(data); }
-      }
-
-      function looksLikeJSONText(s) {
-        const t = (s || "").trim();
-        return (t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"));
-      }
-
-      function parseSSEFromBuffer(buffer) {
-        // returns { events: [payloadStr...], rest }
-        const parts = buffer.split("\n\n");
-        const rest = parts.pop() || "";
-        const events = [];
-
-        for (const part of parts) {
-          const lines = part.split("\n");
-          for (const line of lines) {
-            if (!line.startsWith("data:")) continue;
-            events.push(line.replace(/^data:\s*/, ""));
-          }
-        }
-        return { events, rest };
-      }
-
-      async function postToN8nSmart(msg, sessionId, onChunk) {
-        const started = performance.now();
-
-        const res = await fetch(N8N_WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // important: ask for streaming, but still accept json fallback
-            "Accept": "text/event-stream, application/json, text/plain"
-          },
-          body: JSON.stringify({ msg, sessionId })
-        });
-
-        const latencyMs = Math.round(performance.now() - started);
-        const ct = (res.headers.get("content-type") || "").toLowerCase();
-
-        // A) JSON response
-        if (ct.includes("application/json")) {
-          const data = await res.json();
-          return { mode: "json", data, latencyMs };
-        }
-
-        // B) Streaming / text
-        if (!res.body) {
-          const txt = await res.text().catch(() => "");
-          return { mode: "text", data: { output: txt }, latencyMs };
-        }
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-
-        let buffer = "";
-        let sawDataEvent = false;
-        let sawAny = false;
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          const chunkStr = decoder.decode(value, { stream: true });
-          if (!chunkStr) continue;
-
-          sawAny = true;
-
-          // If it’s SSE, it’ll contain "data:" lines
-          buffer += chunkStr;
-
-          if (buffer.includes("data:")) {
-            const parsed = parseSSEFromBuffer(buffer);
-            buffer = parsed.rest;
-
-            for (const payload of parsed.events) {
-              if (!payload) continue;
-              if (payload === "[DONE]" || payload === "DONE") continue;
-
-              sawDataEvent = true;
-
-              // payload may be json token or raw string
-              if (looksLikeJSONText(payload)) {
-                try {
-                  const obj = JSON.parse(payload);
-                  const token = obj.token ?? obj.delta ?? obj.text ?? obj.output ?? obj.content;
-                  if (typeof token === "string" && token.length) onChunk(token);
-                  else onChunk(payload);
-                } catch {
-                  onChunk(payload);
-                }
-              } else {
-                onChunk(payload);
-              }
-            }
-          } else {
-            // plain chunked text (no data:)
-            // flush buffer immediately as chunks
-            onChunk(chunkStr);
-            buffer = "";
-          }
-        }
-
-        // If we ended and buffer still has data (rare), flush it
-        if (buffer && !sawDataEvent) onChunk(buffer);
-
-        return { mode: sawDataEvent ? "stream" : (sawAny ? "text" : "empty"), data: null, latencyMs };
-      }
-
+      // --- CORE LOGIC: n8n SSE Streaming ---
       async function sendMessage() {
         if (isSending) return;
 
         const msg = input.value.trim();
         if (!msg) return;
 
-        addMessage({ text: msg, sender: "user" });
+        // 1. Setup UI state
         input.value = "";
-        input.focus();
-
+        input.blur();
         isSending = true;
         sendBtn.disabled = true;
         input.disabled = true;
 
-        const typingIndicator = createTypingIndicator();
-        chatBox.appendChild(typingIndicator);
-        scrollToBottom();
+        addMessage({ text: msg, sender: "user" });
+
+        // Create Bot Message Placeholder
+        const botMsg = addMessage({ text: "", sender: "bot", typing: true });
+        const typingState = botMsg.__typing; 
 
         try {
           const sessionId = getOrCreateSessionId();
 
-          const botMsg = addMessage({
-            text: "",
-            sender: "bot",
-            metaPills: [{ label: "⏳ ...", cls: "info" }],
-            typing: true
+          // 2. Start POST request
+          const response = await fetch(N8N_WEBHOOK_URL, {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ msg, sessionId })
           });
-          const t = botMsg.__typing;
 
-          const onChunk = (chunk) => {
-            t.rawText += String(chunk);
-            t.pre.textContent = t.rawText;
-            scrollToBottom();
-          };
+          // 3. Initialize Stream Reader
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let buffer = "";
 
-          const result = await postToN8nSmart(msg, sessionId, onChunk);
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-          if (typingIndicator?.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
 
-          // fallback if JSON
-          if (result.mode === "json") {
-            const answer = extractAnswerFlexible(result.data);
-            t.rawText = answer || "پاسخ نامعتبر از سرور دریافت شد.";
-            t.pre.textContent = t.rawText;
-          } else if (result.mode === "empty") {
-            t.rawText = "هیچ محتوایی از سرور دریافت نشد. (احتمالاً تنظیمات Respond to Webhook یا Proxy در حال Buffer کردن است)";
-            t.pre.textContent = t.rawText;
+            // 4. Parse SSE (Server-Sent Events)
+            // Lines look like: data: {"token": "word"} OR data: {"output": "word"}
+            const lines = buffer.split("\n");
+            // Keep the last partial line in the buffer
+            buffer = lines.pop(); 
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || trimmed.startsWith(":")) continue; // skip comments/empty
+
+              if (trimmed.startsWith("data:")) {
+                const dataStr = trimmed.replace("data:", "").trim();
+                if (dataStr === "[DONE]") continue;
+
+                try {
+                  // Attempt JSON parse
+                  const json = JSON.parse(dataStr);
+                  // n8n v1.106+ usually sends { token: "..." } or { output: "..." }
+                  const token = json.token || json.output || json.content || "";
+                  
+                  if (token) {
+                    typingState.rawText += token;
+                    // Render simplified Markdown live
+                    typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
+                    scrollToBottom();
+                  }
+                } catch (e) {
+                  // Fallback: If n8n sends raw text for some reason
+                  console.warn("Non-JSON SSE chunk:", dataStr);
+                  if (dataStr) {
+                    typingState.rawText += dataStr;
+                    typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
+                    scrollToBottom();
+                  }
+                }
+              }
+            }
           }
 
-          // stop caret
-          t.caret.textContent = "";
-
-          const latencyPill =
-            result.latencyMs < 8000
-              ? { label: `⏱ ${result.latencyMs}ms`, cls: "ok" }
-              : { label: `⏱ ${Math.round(result.latencyMs / 1000)}s`, cls: "warn" };
-
-          const modePill =
-            (result.mode === "stream")
-              ? { label: "✅ Stream", cls: "ok" }
-              : (result.mode === "json")
-                ? { label: "⚠️ JSON", cls: "warn" }
-                : { label: "ℹ️ Text", cls: "info" };
-
-          botMsg.querySelector(".message-text").innerHTML =
-            `<div class="rendered-answer">${renderMarkdownLiteToHTML(t.rawText)}</div>`;
-
-          const timeDiv = botMsg.querySelector(".message-time");
-          timeDiv.innerHTML = [latencyPill, modePill, { label: timeHHMM(), cls: "" }]
-            .map(p => pillHTML(p.label, p.cls)).join(" ");
+          // Stream finished
+          typingState.caret.remove();
 
         } catch (err) {
-          if (typingIndicator?.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
-          addMessage({
-            text: "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
-            sender: "bot",
-            metaPills: [{ label: "Error", cls: "warn" }]
-          });
-          console.error(err);
+          console.error("Stream Error:", err);
+          typingState.caret.remove();
+          typingState.pre.textContent += "\n[خطا در ارتباط با سرور]";
         } finally {
           isSending = false;
           sendBtn.disabled = false;
           input.disabled = false;
+          input.focus();
         }
       }
 
+      // --- Event Listeners ---
       clearBtn.addEventListener("click", function () {
         if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
-
         chatBox.querySelectorAll(".message").forEach(m => m.remove());
         localStorage.removeItem("eveai_sessionId");
-
-        addMessage({
-          text: "گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.",
-          sender: "bot",
-          metaPills: [{ label: "Cleared", cls: "ok" }]
-        });
       });
 
       sendBtn.addEventListener("click", sendMessage);
