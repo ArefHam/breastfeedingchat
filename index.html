@@ -13,16 +13,11 @@
       --bg1:#fff7fb;
       --bg2:#f1f7ff;
       --ink:#1f2937;
-
       --p1:#a855f7;
       --p2:#8b5cf6;
-
-      --line:#efe6ff;
       --soft:#faf7ff;
-
       --shadow: 0 18px 55px rgba(88, 28, 135, 0.14);
       --shadow2: 0 10px 25px rgba(17, 24, 39, 0.06);
-
       --r-lg:22px;
       --r-md:16px;
     }
@@ -30,7 +25,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
 
-    /* ✅ prevent whole page scrolling */
+    /* ✅ stop whole-page scroll; only chat scrolls */
     body {
       font-family: 'Vazirmatn', sans-serif;
       direction: rtl;
@@ -43,12 +38,15 @@
       overflow: hidden;
     }
 
+    ::selection{ background: rgba(168,85,247,0.25); }
+
     .page {
       height: 100vh;
       display: flex;
       flex-direction: column;
       padding: 16px;
       gap: 12px;
+      min-height: 0; /* ✅ critical */
     }
 
     .header-decoration {
@@ -74,9 +72,8 @@
       border: 1px solid rgba(239,230,255,0.9);
       position: relative;
 
-      /* ✅ fill remaining viewport */
       flex: 1 1 auto;
-      min-height: 0; /* ✅ critical for inner scroll */
+      min-height: 0; /* ✅ allow inner scroll */
     }
 
     .chat-container::before{
@@ -86,6 +83,16 @@
       pointer-events:none;
       background: linear-gradient(180deg, rgba(168,85,247,0.10), transparent 22%, transparent 78%, rgba(34,197,94,0.06));
       opacity: 0.8;
+      z-index: 0;
+    }
+
+    /* ✅ Fixed header/toolbar INSIDE container (sticky during chat scroll) */
+    .sticky-top {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .chat-header {
@@ -100,10 +107,7 @@
       align-items: center;
       justify-content: center;
       gap: 14px;
-      z-index: 2;
       border-bottom: 1px solid rgba(255,255,255,0.12);
-      flex: 0 0 auto;
-      position: relative;
     }
     .chat-header i {
       font-size: 26px;
@@ -124,11 +128,9 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      padding: 12px 14px 8px;
+      padding: 12px 14px 10px;
       background: rgba(252,250,255,0.92);
       border-bottom: 1px solid rgba(239,230,255,0.8);
-      z-index: 2;
-      flex: 0 0 auto;
     }
     .quick-btn {
       padding: 10px 14px;
@@ -146,17 +148,20 @@
       align-items: center;
       gap: 8px;
       box-shadow: 0 10px 18px rgba(17,24,39,0.05);
+      user-select: none;
     }
     .quick-btn i{ color: rgba(168,85,247,0.95); }
     .quick-btn:hover { transform: translateY(-2px); border-color: rgba(168,85,247,0.45); }
 
-    /* ✅ ONLY THIS scrolls */
+    /* ✅ ONLY this scrolls (organized) */
     .chat-box {
+      position: relative;
+      z-index: 1;
       flex: 1 1 auto;
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 20px 16px 22px 18px;
+      padding: 18px 16px 22px 18px;
       background:
         radial-gradient(700px 260px at 80% 0%, rgba(168,85,247,0.08), transparent 60%),
         radial-gradient(700px 260px at 10% 100%, rgba(34,197,94,0.06), transparent 60%),
@@ -164,8 +169,14 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
-      z-index: 1;
+      scroll-behavior: smooth;
     }
+
+    /* optional prettier scrollbar */
+    .chat-box::-webkit-scrollbar { width: 10px; }
+    .chat-box::-webkit-scrollbar-track { background: rgba(233,213,255,0.25); border-radius: 999px; }
+    .chat-box::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.45); border-radius: 999px; }
+    .chat-box::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.65); }
 
     .welcome-message {
       background:
@@ -198,8 +209,8 @@
       word-wrap: break-word;
       box-shadow: 0 10px 24px rgba(17,24,39,0.06);
       position: relative;
-      border: 1px solid transparent;
       animation: fadeIn 0.25s ease-in-out;
+      border: 1px solid transparent;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -284,6 +295,7 @@
       animation: caretBlink 0.9s infinite;
       color: rgba(109,40,217,0.95);
       font-weight: 800;
+      vertical-align: baseline;
     }
     @keyframes caretBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
 
@@ -295,6 +307,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
     .user-message .message-time { color: rgba(255,255,255,0.92); justify-content: flex-start; }
     .bot-message .message-time  { justify-content: flex-end; }
@@ -306,17 +319,19 @@
       border: 1px solid rgba(233,213,255,0.9);
       background: rgba(243,232,255,0.7);
       color: #6d28d9;
+      white-space: nowrap;
     }
-    .pill.ok { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.10); color: #166534; }
+    .pill.ok   { border-color: rgba(34,197,94,0.25);  background: rgba(34,197,94,0.10);  color: #166534; }
     .pill.warn { border-color: rgba(249,115,22,0.25); background: rgba(249,115,22,0.10); color: #9a3412; }
+    .pill.info { border-color: rgba(59,130,246,0.22); background: rgba(59,130,246,0.10); color: #1d4ed8; }
 
     .input-area {
+      z-index: 2;
       display: flex;
       gap: 10px;
       padding: 16px 16px 18px;
       border-top: 1px solid rgba(239,230,255,0.95);
       background: linear-gradient(180deg, rgba(252,250,255,0.96) 0%, rgba(250,247,255,0.92) 100%);
-      z-index: 2;
       flex: 0 0 auto;
     }
     input {
@@ -358,14 +373,17 @@
                   linear-gradient(135deg, var(--p1) 0%, var(--p2) 85%);
       color: #fff;
     }
+    button#send-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(168, 85, 247, 0.25); }
     button#clear-btn {
       background: radial-gradient(260px 110px at 20% 20%, rgba(255,255,255,0.18), transparent 60%),
                   linear-gradient(135deg, #fb923c 0%, #f97316 75%, #ea580c 120%);
       color: #fff;
     }
-    button:disabled{ opacity: 0.6; cursor: not-allowed; box-shadow: none !important; }
+    button#clear-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(249, 115, 22, 0.22); }
+    button:disabled{ opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
     .footer-info {
+      z-index: 2;
       text-align: center;
       padding: 13px 16px;
       font-size: 13px;
@@ -377,7 +395,6 @@
       align-items: center;
       gap: 18px;
       flex-wrap: wrap;
-      z-index: 2;
       flex: 0 0 auto;
     }
     .footer-info i { color: rgba(168,85,247,0.95); }
@@ -425,22 +442,26 @@
     <div class="header-decoration"></div>
 
     <div class="chat-container">
-      <div class="chat-header">
-        <i class="fas fa-heart"></i>
-        <div>
-          گپ و گفت مادرانه
-          <div class="header-subtitle">پرسش و پاسخ تخصصی درباره شیردهی و مراقبت از نوزاد</div>
-        </div>
-        <i class="fas fa-baby"></i>
-      </div>
 
-      <div class="quick-actions">
-        <button class="quick-btn" data-question="مشکلات شیردهی چیست؟"><i class="fas fa-question-circle"></i> مشکلات شیردهی</button>
-        <button class="quick-btn" data-question="فواید شیر مادر چیست؟"><i class="fas fa-heartbeat"></i> فواید شیر مادر</button>
-        <button class="quick-btn" data-question="راههای افزایش شیر مادر چیست؟"><i class="fas fa-plus-circle"></i> افزایش شیر</button>
-        <button class="quick-btn" data-question="تغذیه مادر شیرده"><i class="fas fa-apple-alt"></i> تغذیه مادر</button>
-        <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk while breastfeeding?"><i class="fas fa-language"></i> English test</button>
-        <button class="quick-btn" data-question="كيف أعرف أن طفلي يحصل على ما يكفي من الحليب أثناء الرضاعة؟"><i class="fas fa-language"></i> Arabic test</button>
+      <!-- ✅ Sticky header + quick actions stay visible when chat scrolls -->
+      <div class="sticky-top">
+        <div class="chat-header">
+          <i class="fas fa-heart"></i>
+          <div>
+            گپ و گفت مادرانه
+            <div class="header-subtitle">پرسش و پاسخ تخصصی درباره شیردهی و مراقبت از نوزاد</div>
+          </div>
+          <i class="fas fa-baby"></i>
+        </div>
+
+        <div class="quick-actions">
+          <button class="quick-btn" data-question="مشکلات شیردهی چیست؟"><i class="fas fa-question-circle"></i> مشکلات شیردهی</button>
+          <button class="quick-btn" data-question="فواید شیر مادر چیست؟"><i class="fas fa-heartbeat"></i> فواید شیر مادر</button>
+          <button class="quick-btn" data-question="راههای افزایش شیر مادر چیست؟"><i class="fas fa-plus-circle"></i> افزایش شیر</button>
+          <button class="quick-btn" data-question="تغذیه مادر شیرده"><i class="fas fa-apple-alt"></i> تغذیه مادر</button>
+          <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk while breastfeeding?"><i class="fas fa-language"></i> English test</button>
+          <button class="quick-btn" data-question="كيف أعرف أن طفلي يحصل على ما يكفي من الحليب أثناء الرضاعة؟"><i class="fas fa-language"></i> Arabic test</button>
+        </div>
       </div>
 
       <div id="chat-box" class="chat-box">
@@ -471,7 +492,7 @@
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", function () {
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
       const sendBtn = document.getElementById("send-btn");
@@ -482,15 +503,8 @@
 
       let isSending = false;
 
-      // ---------- UI helpers ----------
-      function scrollToBottom() {
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
-
-      function timeHHMM() {
-        const t = new Date();
-        return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`;
-      }
+      // ---------- Utilities ----------
+      function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
 
       function escapeHTML(str) {
         return String(str).replace(/[&<>"'`=\/]/g, (s) => ({
@@ -505,6 +519,7 @@
         })[s]);
       }
 
+      // Markdown-lite: bold + line breaks
       function renderMarkdownLiteToHTML(rawText) {
         const text = (rawText == null) ? "" : String(rawText);
         let safe = escapeHTML(text);
@@ -513,6 +528,7 @@
         return safe;
       }
 
+      // Detect RTL/LTR per message
       function detectDir(text) {
         const s = (text == null) ? "" : String(text);
         const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
@@ -523,20 +539,6 @@
           if (ltrRe.test(ch)) return "ltr";
         }
         return document.documentElement.dir || "rtl";
-      }
-
-      function pillHTML(label, cls) {
-        return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
-      }
-
-      function createTypingIndicator() {
-        const typingDiv = document.createElement("div");
-        typingDiv.className = "typing-indicator";
-        typingDiv.innerHTML = `
-          <div class="typing-text">در حال دریافت پاسخ...</div>
-          <div class="typing-dots"><span></span><span></span><span></span></div>
-        `;
-        return typingDiv;
       }
 
       function getOrCreateSessionId() {
@@ -550,8 +552,27 @@
         return sessionId;
       }
 
-      // ---------- Message creation (FIXED) ----------
-      function addMessage({ text, sender, metaPills = [], streamMode = false }) {
+      function createTypingIndicator() {
+        const typingDiv = document.createElement("div");
+        typingDiv.className = "typing-indicator";
+        typingDiv.innerHTML = `
+          <div class="typing-text">در حال دریافت پاسخ...</div>
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+        `;
+        return typingDiv;
+      }
+
+      function timeHHMM() {
+        const t = new Date();
+        return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`;
+      }
+
+      function pillHTML(label, cls) {
+        return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
+      }
+
+      // ---------- Message creation ----------
+      function addMessage({ text, sender, metaPills = [], typing = false }) {
         const container = document.createElement("div");
         container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
 
@@ -566,7 +587,7 @@
           const dir = detectDir(text);
           container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
 
-          // stream-friendly raw area
+          // typing container
           const wrap = document.createElement("div");
           wrap.className = "rendered-answer";
 
@@ -578,7 +599,7 @@
 
           const caret = document.createElement("span");
           caret.className = "typing-caret";
-          caret.textContent = streamMode ? "▍" : "";
+          caret.textContent = typing ? "▍" : "";
 
           wrap.appendChild(pre);
           wrap.appendChild(caret);
@@ -586,8 +607,7 @@
           msgText.appendChild(wrap);
           container.appendChild(msgText);
 
-          // ✅ single consistent handle
-          container.__stream = { pre, caret, rawText: String(text || "") };
+          container.__typing = { pre, caret, rawText: String(text || "") };
         }
 
         const timeDiv = document.createElement("div");
@@ -604,51 +624,43 @@
         return container;
       }
 
-      // ---------- Response extraction ----------
-      function extractAnswer(obj) {
+      // ---------- Robust response extraction (JSON fallback) ----------
+      function extractAnswer(data) {
         const candidate =
-          (obj && (obj.answer ?? obj.response ?? obj.text ?? obj.output)) ??
-          (Array.isArray(obj) ? (obj[0]?.answer ?? obj[0]?.response ?? obj[0]?.text ?? obj[0]?.output) : null);
+          (data && (data.answer ?? data.response ?? data.text ?? data.output)) ??
+          (Array.isArray(data) ? (data[0]?.answer ?? data[0]?.response ?? data[0]?.text ?? data[0]?.output) : null);
 
         if (candidate == null) return null;
         if (typeof candidate === "string") return candidate;
+
         try { return JSON.stringify(candidate, null, 2); } catch { return String(candidate); }
       }
 
-      function looksLikeJSON(s) {
-        const t = (s || "").trim();
-        return (t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"));
-      }
-
-      // ---------- Streaming fetch (ROBUST) ----------
-      async function postToN8nStreaming(msg, sessionId, onToken) {
+      // ---------- Streaming fetch ----------
+      // NOTE: True streaming requires n8n Respond to Webhook to output SSE/chunked,
+      // but we still support fallback JSON (your current case).
+      async function postToN8nStreaming(msg, sessionId, onChunk) {
         const started = performance.now();
 
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // ✅ IMPORTANT: prefer SSE but allow JSON fallback
             "Accept": "text/event-stream, application/json"
           },
           body: JSON.stringify({ msg, sessionId })
         });
 
-        const ct = (res.headers.get("content-type") || "").toLowerCase();
         const latencyMs = Math.round(performance.now() - started);
+        const ct = (res.headers.get("content-type") || "").toLowerCase();
 
-        if (!res.ok) {
-          const txt = await res.text().catch(() => "");
-          throw new Error(`HTTP ${res.status} ${res.statusText} :: ${txt.slice(0, 300)}`);
-        }
-
-        // JSON fallback
+        // ✅ If server returns JSON (your current workflow), fallback:
         if (ct.includes("application/json")) {
           const data = await res.json();
           return { mode: "json", data, latencyMs };
         }
 
-        // Streaming/SSE path
+        // ✅ Stream (SSE or chunked text)
         if (!res.body) {
           const txt = await res.text().catch(() => "");
           return { mode: "text", data: { output: txt }, latencyMs };
@@ -658,73 +670,58 @@
         const decoder = new TextDecoder("utf-8");
 
         let buffer = "";
-        let sawSSE = false;
+        let sawAnyChunk = false;
 
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
+          const chunkStr = decoder.decode(value, { stream: true });
+          buffer += chunkStr;
 
-          // Try SSE parsing first (data: ... \n\n)
-          // If the stream isn't SSE-formatted, we'll fall back to raw streaming.
-          let progressed = false;
-
-          if (buffer.includes("\n\n")) {
+          // If it’s SSE, parse "data:" lines separated by blank lines.
+          // If it’s plain chunked text, we still pass through.
+          // Heuristic: if it contains "data:" treat as SSE.
+          if (buffer.includes("data:")) {
             const parts = buffer.split("\n\n");
             buffer = parts.pop() || "";
 
             for (const part of parts) {
-              const lines = part.split(/\r?\n/);
-              const dataLines = lines.filter(l => l.startsWith("data:"));
-              if (dataLines.length) {
-                sawSSE = true;
-                progressed = true;
-
-                // SSE can send multiple data: lines per event; join them
-                const payload = dataLines.map(l => l.replace(/^data:\s?/, "")).join("\n");
+              const lines = part.split("\n");
+              for (const line of lines) {
+                if (!line.startsWith("data:")) continue;
+                const payload = line.replace(/^data:\s*/, "");
 
                 if (payload === "[DONE]" || payload === "DONE") {
-                  // done marker
+                  sawAnyChunk = true;
                   continue;
                 }
 
-                // payload may be JSON or plain text
-                if (looksLikeJSON(payload)) {
-                  try {
-                    const obj = JSON.parse(payload);
-                    const tok =
-                      (typeof obj === "string") ? obj :
-                      (obj.token ?? obj.delta ?? obj.text ?? obj.content ?? obj.output ?? "");
-                    if (tok) onToken(String(tok));
-                    else onToken(payload); // safe fallback
-                  } catch {
-                    onToken(payload);
-                  }
-                } else {
-                  onToken(payload);
+                // payload can be JSON or raw text
+                let token = payload;
+                try {
+                  const obj = JSON.parse(payload);
+                  token = obj.token ?? obj.delta ?? obj.text ?? obj.output ?? obj.content ?? payload;
+                } catch {}
+
+                if (token) {
+                  sawAnyChunk = true;
+                  onChunk(String(token));
                 }
               }
             }
-          }
-
-          // If not SSE, treat incoming bytes as raw streaming text
-          // (some servers stream plain text without "data:")
-          if (!progressed && !sawSSE) {
-            // To avoid duplicating, only emit safe incremental chunk
-            onToken(chunk);
-            buffer = ""; // we already emitted it
+          } else {
+            // plain chunked text stream
+            sawAnyChunk = true;
+            onChunk(chunkStr);
+            buffer = "";
           }
         }
 
-        // If stream ended and we still have buffered content, emit it
-        if (buffer && !sawSSE) onToken(buffer);
-
-        return { mode: "stream", data: null, latencyMs };
+        return { mode: sawAnyChunk ? "stream" : "text", data: null, latencyMs };
       }
 
-      // ---------- Main send ----------
+      // ---------- Main send logic ----------
       async function sendMessage() {
         if (isSending) return;
 
@@ -743,67 +740,66 @@
         chatBox.appendChild(typingIndicator);
         scrollToBottom();
 
-        // Create bot message in STREAM mode (raw streaming area)
-        const botMsg = addMessage({
-          text: "",
-          sender: "bot",
-          metaPills: [{ label: "⏳ ...", cls: "" }],
-          streamMode: true
-        });
-
-        const s = botMsg.__stream;
-
         try {
           const sessionId = getOrCreateSessionId();
 
-          const onToken = (tok) => {
-            if (!tok) return;
-            s.rawText += tok;
-            s.pre.textContent = s.rawText;  // raw streaming view
+          // Create bot message in typing mode
+          const botMsg = addMessage({
+            text: "",
+            sender: "bot",
+            metaPills: [{ label: "⏳ ...", cls: "info" }],
+            typing: true
+          });
+          const t = botMsg.__typing;
+
+          const onChunk = (chunk) => {
+            t.rawText += chunk;
+            t.pre.textContent = t.rawText;
             scrollToBottom();
           };
 
-          const result = await postToN8nStreaming(msg, sessionId, onToken);
+          const result = await postToN8nStreaming(msg, sessionId, onChunk);
 
           if (typingIndicator?.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
 
-          // If server returned JSON, replace rawText with extracted answer
+          // JSON fallback (your current workflow)
           if (result.mode === "json") {
             const answer = extractAnswer(result.data);
-            s.rawText = answer || "پاسخ نامعتبر از سرور دریافت شد.";
-            s.pre.textContent = s.rawText;
+            t.rawText = answer || "پاسخ نامعتبر از سرور دریافت شد.";
+            t.pre.textContent = t.rawText;
           }
 
-          // Final render (markdown-lite) + remove caret
-          s.caret.textContent = "";
-          botMsg.querySelector(".message-text").innerHTML =
-            `<div class="rendered-answer">${renderMarkdownLiteToHTML(s.rawText)}</div>`;
+          // stop caret
+          t.caret.textContent = "";
 
+          // latency pill
           const latencyPill =
             result.latencyMs < 8000
               ? { label: `⏱ ${result.latencyMs}ms`, cls: "ok" }
               : { label: `⏱ ${Math.round(result.latencyMs / 1000)}s`, cls: "warn" };
 
           const modePill =
-            result.mode === "stream"
+            (result.mode === "stream")
               ? { label: "✅ Stream", cls: "ok" }
               : { label: "⚠️ JSON", cls: "warn" };
 
-          botMsg.querySelector(".message-time").innerHTML =
-            [latencyPill, modePill, { label: timeHHMM(), cls: "" }]
-              .map(p => pillHTML(p.label, p.cls)).join(" ");
+          // Replace with HTML-safe markdown-lite
+          botMsg.querySelector(".message-text").innerHTML =
+            `<div class="rendered-answer">${renderMarkdownLiteToHTML(t.rawText)}</div>`;
+
+          // Update pills
+          const timeDiv = botMsg.querySelector(".message-time");
+          timeDiv.innerHTML = [latencyPill, modePill, { label: timeHHMM(), cls: "" }]
+            .map(p => pillHTML(p.label, p.cls)).join(" ");
 
         } catch (err) {
           if (typingIndicator?.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
-
-          // Replace bot message content with error
-          botMsg.querySelector(".message-text").innerHTML =
-            `<div class="rendered-answer">${escapeHTML("مشکلی پیش آمد. لطفاً دوباره تلاش کنید.")}</div>`;
-
-          botMsg.querySelector(".message-time").innerHTML =
-            pillHTML("Error", "warn") + " " + pillHTML(timeHHMM(), "");
-
-          console.error("Streaming error:", err);
+          addMessage({
+            text: "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
+            sender: "bot",
+            metaPills: [{ label: "Error", cls: "warn" }]
+          });
+          console.error(err);
         } finally {
           isSending = false;
           sendBtn.disabled = false;
@@ -811,21 +807,29 @@
         }
       }
 
-      // ---------- Clear ----------
-      clearBtn.addEventListener("click", () => {
+      // ---------- Clear behavior ----------
+      clearBtn.addEventListener("click", function () {
         if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
+
         chatBox.querySelectorAll(".message").forEach(m => m.remove());
         localStorage.removeItem("eveai_sessionId");
-        addMessage({ text: "گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.", sender: "bot" });
+
+        addMessage({
+          text: "گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.",
+          sender: "bot",
+          metaPills: [{ label: "Cleared", cls: "ok" }]
+        });
       });
 
       // ---------- Events ----------
       sendBtn.addEventListener("click", sendMessage);
-      input.addEventListener("keydown", (e) => { if (e.key === "Enter") sendMessage(); });
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") sendMessage();
+      });
 
-      quickButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-          input.value = btn.getAttribute("data-question") || "";
+      quickButtons.forEach(button => {
+        button.addEventListener("click", function () {
+          input.value = this.getAttribute("data-question") || "";
           sendMessage();
         });
       });
