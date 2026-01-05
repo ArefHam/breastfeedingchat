@@ -485,7 +485,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-      // ✅ YOUR n8n WEBHOOK URL
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
       const sendBtn = document.getElementById("send-btn");
@@ -493,226 +492,130 @@
       const input = document.getElementById("user-input");
       const quickButtons = document.querySelectorAll(".quick-btn");
       const chatBox = document.getElementById("chat-box");
-
       let isSending = false;
 
-      // --- Helpers ---
       function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
-
-      function escapeHTML(str) {
-        return String(str).replace(/[&<>"'`=\/]/g, (s) => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-          "`": "&#x60;",
-          "=": "&#x3D;",
-          "/": "&#x2F;"
-        })[s]);
-      }
-
-      function renderMarkdownLiteToHTML(rawText) {
-        const text = (rawText == null) ? "" : String(rawText);
-        let safe = escapeHTML(text);
-        safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-        safe = safe.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
-        return safe;
-      }
-
-      function detectDir(text) {
-        const s = (text == null) ? "" : String(text);
-        const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-        const ltrRe = /[A-Za-z]/;
-        for (const ch of s) {
-          if (/\s/.test(ch)) continue;
-          if (rtlRe.test(ch)) return "rtl";
-          if (ltrRe.test(ch)) return "ltr";
-        }
-        return document.documentElement.dir || "rtl";
-      }
-
+      function escapeHTML(str) { return String(str).replace(/[&<>"'`=\/]/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[s]); }
+      function renderMarkdownLiteToHTML(rawText) { return rawText ? escapeHTML(rawText).replace(/\n/g, "<br>") : ""; }
+      function detectDir(text) { return /[\u0600-\u06FF]/.test(text) ? "rtl" : "ltr"; }
+      function timeHHMM() { const d = new Date(); return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`; }
       function getOrCreateSessionId() {
-        let sessionId = localStorage.getItem("eveai_sessionId");
-        if (!sessionId) {
-          sessionId = (crypto && crypto.randomUUID)
-            ? crypto.randomUUID()
-            : (Date.now() + "_" + Math.random().toString(16).slice(2));
-          localStorage.setItem("eveai_sessionId", sessionId);
-        }
-        return sessionId;
+        let s = localStorage.getItem("eveai_sessionId");
+        if (!s) { s = Date.now().toString(); localStorage.setItem("eveai_sessionId", s); }
+        return s;
       }
 
-      function timeHHMM() {
-        const t = new Date();
-        return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`;
-      }
-
-      // --- UI Builder ---
-      function addMessage({ text, sender, metaPills = [], typing = false }) {
+      function addMessage({ text, sender, typing = false }) {
         const container = document.createElement("div");
         container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
-
         const msgText = document.createElement("div");
         msgText.className = "message-text";
 
         if (sender === "user") {
-          msgText.textContent = (text == null) ? "" : String(text);
+          msgText.textContent = text;
           container.classList.add("msg-rtl");
-          container.appendChild(msgText);
         } else {
-          // Bot message with rendering area
-          const dir = detectDir(text);
-          container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
-
-          const wrap = document.createElement("div");
-          wrap.className = "rendered-answer";
-
+          container.classList.add(detectDir(text) === "ltr" ? "msg-ltr" : "msg-rtl");
           const pre = document.createElement("div");
-          pre.style.whiteSpace = "pre-wrap";
-          pre.style.unicodeBidi = "plaintext";
-          pre.style.overflowWrap = "anywhere";
-          pre.textContent = (text == null) ? "" : String(text);
-
-          const caret = document.createElement("span");
-          caret.className = "typing-caret";
-          caret.textContent = typing ? "▍" : "";
-
-          wrap.appendChild(pre);
-          wrap.appendChild(caret);
-
-          msgText.appendChild(wrap);
-          container.appendChild(msgText);
-
-          // Save references for streaming updates
-          container.__typing = { pre, caret, rawText: String(text || "") };
+          pre.className = "rendered-answer";
+          pre.textContent = text;
+          msgText.appendChild(pre);
+          if (typing) {
+             const caret = document.createElement("span");
+             caret.className = "typing-caret";
+             caret.textContent = "▍";
+             msgText.appendChild(caret);
+             container.__typing = { pre, caret, rawText: text || "" };
+          }
         }
-
         const timeDiv = document.createElement("div");
         timeDiv.className = "message-time";
         timeDiv.textContent = timeHHMM();
+        container.appendChild(msgText);
         container.appendChild(timeDiv);
-
         chatBox.appendChild(container);
         scrollToBottom();
-
         return container;
       }
 
-      // --- CORE LOGIC: n8n SSE/NDJSON Streaming ---
       async function sendMessage() {
         if (isSending) return;
-
         const msg = input.value.trim();
         if (!msg) return;
 
-        // 1. Setup UI state
-        input.value = "";
-        input.blur();
         isSending = true;
+        input.value = "";
+        input.disabled = true; 
         sendBtn.disabled = true;
-        input.disabled = true;
 
         addMessage({ text: msg, sender: "user" });
-
-        // Create Bot Message Placeholder
         const botMsg = addMessage({ text: "", sender: "bot", typing: true });
-        const typingState = botMsg.__typing; 
+        const typingState = botMsg.__typing;
 
         try {
-          const sessionId = getOrCreateSessionId();
-
-          // 2. Start POST request
           const response = await fetch(N8N_WEBHOOK_URL, {
             method: "POST",
-            headers: { 
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ msg, sessionId })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ msg, sessionId: getOrCreateSessionId() })
           });
 
-          // 3. Initialize Stream Reader
           const reader = response.body.getReader();
-          const decoder = new TextDecoder("utf-8");
+          const decoder = new TextDecoder();
           let buffer = "";
 
           while (true) {
-            const { value, done } = await reader.read();
+            const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value, { stream: true });
-            buffer += chunk;
-
-            // 4. Parse Stream (Handle both SSE "data:" and Raw JSON)
+            buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split("\n");
-            // Keep the last partial line in the buffer
-            buffer = lines.pop(); 
+            buffer = lines.pop(); // Keep incomplete line
 
             for (const line of lines) {
               const trimmed = line.trim();
               if (!trimmed) continue;
-
-              // Logic to strip "data:" prefix if present, otherwise parse raw line
+              
+              // UNIVERSAL PARSER: Handles both "data: {...}" (SSE) and raw "{...}" (NDJSON)
               let jsonStr = trimmed;
-              if (trimmed.startsWith("data:")) {
-                jsonStr = trimmed.replace("data:", "").trim();
-              }
-
+              if (trimmed.startsWith("data:")) jsonStr = trimmed.replace("data:", "").trim();
               if (jsonStr === "[DONE]") continue;
 
               try {
                 const json = JSON.parse(jsonStr);
-                
-                // YOUR FIX: Check specifically for "content" (from your screenshot)
-                // or "output" / "token" (standard n8n formats)
-                const token = json.content || json.output || json.token || "";
-                
-                if (token) {
-                  typingState.rawText += token;
-                  // Render simplified Markdown live
+                // Extract content from any n8n format
+                const chunk = json.content || json.output || json.token || ""; 
+                if (chunk) {
+                  typingState.rawText += chunk;
                   typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
                   scrollToBottom();
                 }
               } catch (e) {
-                // Ignore parsing errors for empty lines or "type: begin" messages
+                // Skip invalid JSON lines
               }
             }
           }
-
-          // Stream finished
           typingState.caret.remove();
-
-        } catch (err) {
-          console.error("Stream Error:", err);
+        } catch (error) {
+          console.error(error);
           typingState.caret.remove();
-          typingState.pre.textContent += "\n[خطا در ارتباط با سرور]";
+          typingState.pre.textContent += "\n[خطا در ارتباط]";
         } finally {
           isSending = false;
-          sendBtn.disabled = false;
           input.disabled = false;
+          sendBtn.disabled = false;
           input.focus();
         }
       }
 
-      // --- Event Listeners ---
-      clearBtn.addEventListener("click", function () {
-        if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
-        chatBox.querySelectorAll(".message").forEach(m => m.remove());
-        localStorage.removeItem("eveai_sessionId");
-      });
-
       sendBtn.addEventListener("click", sendMessage);
-      input.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") sendMessage();
+      input.addEventListener("keydown", (e) => e.key === "Enter" && sendMessage());
+      clearBtn.addEventListener("click", () => { 
+        if(confirm("پاک کردن؟")) { chatBox.innerHTML = ""; localStorage.removeItem("eveai_sessionId"); }
       });
-
-      quickButtons.forEach(button => {
-        button.addEventListener("click", function () {
-          input.value = this.getAttribute("data-question") || "";
-          sendMessage();
-        });
-      });
+      quickButtons.forEach(btn => btn.addEventListener("click", () => {
+         input.value = btn.getAttribute("data-question"); sendMessage();
+      }));
     });
-  </script>
+</script>
 </body>
 </html>
