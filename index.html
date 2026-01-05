@@ -444,333 +444,318 @@
     </div>
   </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
-      const sendBtn = document.getElementById("send-btn");
-      const clearBtn = document.getElementById("clear-btn");
-      const input = document.getElementById("user-input");
-      const quickButtons = document.querySelectorAll(".quick-btn");
-      const chatBox = document.getElementById("chat-box");
+  const sendBtn = document.getElementById("send-btn");
+  const clearBtn = document.getElementById("clear-btn");
+  const input = document.getElementById("user-input");
+  const quickButtons = document.querySelectorAll(".quick-btn");
+  const chatBox = document.getElementById("chat-box");
 
-      let isSending = false;
+  let isSending = false;
 
-      // --- Helpers ---
-      function scrollToBottom(force = false) {
-        // Only autoscroll if user is already near bottom, OR forced (when user sends)
-        const threshold = 160;
-        const atBottom = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < threshold;
-        if (force || atBottom) chatBox.scrollTop = chatBox.scrollHeight;
+  // --- Helpers ---
+  function scrollToBottom(force = false) {
+    const threshold = 160;
+    const atBottom = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < threshold;
+    if (force || atBottom) chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function escapeHTML(str) {
+    return String(str).replace(/[&<>"']/g, (s) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    }[s]));
+  }
+
+  function renderMarkdownLiteToHTML(rawText) {
+    const text = (rawText == null) ? "" : String(rawText);
+    let safe = escapeHTML(text);
+    safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    safe = safe.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
+    return safe;
+  }
+
+  function detectDir(text) {
+    const s = (text == null) ? "" : String(text);
+    const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+    const ltrRe = /[A-Za-z]/;
+    for (const ch of s) {
+      if (/\s/.test(ch)) continue;
+      if (rtlRe.test(ch)) return "rtl";
+      if (ltrRe.test(ch)) return "ltr";
+    }
+    return document.documentElement.dir || "rtl";
+  }
+
+  function timeHHMM() {
+    const d = new Date();
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  }
+
+  function getOrCreateSessionId() {
+    let s = localStorage.getItem("eveai_sessionId");
+    if (!s) {
+      s = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + "_" + Math.random().toString(16).slice(2));
+      localStorage.setItem("eveai_sessionId", s);
+    }
+    return s;
+  }
+
+  function addMessage({ text, sender, typing = false }) {
+    const container = document.createElement("div");
+    container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
+
+    const msgText = document.createElement("div");
+    msgText.className = "message-text";
+
+    if (sender === "user") {
+      msgText.textContent = (text == null) ? "" : String(text);
+      container.classList.add("msg-rtl");
+      container.appendChild(msgText);
+    } else {
+      const dir = detectDir(text);
+      container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
+
+      const pre = document.createElement("div");
+      pre.className = "rendered-answer";
+      pre.innerHTML = renderMarkdownLiteToHTML(text || "");
+
+      msgText.appendChild(pre);
+
+      let caret = null;
+      if (typing) {
+        caret = document.createElement("span");
+        caret.className = "typing-caret";
+        caret.textContent = "▍";
+        msgText.appendChild(caret);
       }
 
-      function escapeHTML(str) {
-        return String(str).replace(/[&<>"']/g, (s) => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-        }[s]));
-      }
+      container.appendChild(msgText);
+      container.__typing = { pre, caret, rawText: String(text || "") };
+    }
 
-      // Markdown-lite: **bold** + line breaks
-      function renderMarkdownLiteToHTML(rawText) {
-        const text = (rawText == null) ? "" : String(rawText);
-        let safe = escapeHTML(text);
-        safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-        safe = safe.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
-        return safe;
-      }
+    const timeDiv = document.createElement("div");
+    timeDiv.className = "message-time";
+    timeDiv.textContent = timeHHMM();
+    container.appendChild(timeDiv);
 
-      // Better RTL/LTR detector (handles Arabic + Persian + Hebrew ranges)
-      function detectDir(text) {
-        const s = (text == null) ? "" : String(text);
-        const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-        const ltrRe = /[A-Za-z]/;
-        for (const ch of s) {
-          if (/\s/.test(ch)) continue;
-          if (rtlRe.test(ch)) return "rtl";
-          if (ltrRe.test(ch)) return "ltr";
+    chatBox.appendChild(container);
+    scrollToBottom(true);
+    return container;
+  }
+
+  /**
+   * Parses concatenated JSON objects: {...}{...}{...}
+   * Works even when a JSON object is split across chunks.
+   */
+  function extractJsonObjects(buffer) {
+    const objs = [];
+    let inStr = false;
+    let esc = false;
+    let depth = 0;
+    let start = -1;
+    let lastConsumed = 0;
+
+    for (let i = 0; i < buffer.length; i++) {
+      const ch = buffer[i];
+
+      if (inStr) {
+        if (esc) {
+          esc = false;
+        } else if (ch === "\\") {
+          esc = true;
+        } else if (ch === '"') {
+          inStr = false;
         }
-        return document.documentElement.dir || "rtl";
-      }
-
-      function timeHHMM() {
-        const d = new Date();
-        return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-      }
-
-      function getOrCreateSessionId() {
-        let s = localStorage.getItem("eveai_sessionId");
-        if (!s) {
-          s = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + "_" + Math.random().toString(16).slice(2));
-          localStorage.setItem("eveai_sessionId", s);
+        continue;
+      } else {
+        if (ch === '"') {
+          inStr = true;
+          continue;
         }
-        return s;
-      }
-
-      // --- UI: messages ---
-      function addMessage({ text, sender, typing = false }) {
-        const container = document.createElement("div");
-        container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
-
-        const msgText = document.createElement("div");
-        msgText.className = "message-text";
-
-        if (sender === "user") {
-          msgText.textContent = (text == null) ? "" : String(text);
-          container.classList.add("msg-rtl");
-          container.appendChild(msgText);
-        } else {
-          const dir = detectDir(text);
-          container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
-
-          // We'll stream into this element
-          const pre = document.createElement("div");
-          pre.className = "rendered-answer";
-          pre.style.whiteSpace = "pre-wrap";
-          pre.style.unicodeBidi = "plaintext";
-          pre.style.overflowWrap = "anywhere";
-          pre.innerHTML = renderMarkdownLiteToHTML(text || "");
-
-          msgText.appendChild(pre);
-
-          let caret = null;
-          if (typing) {
-            caret = document.createElement("span");
-            caret.className = "typing-caret";
-            caret.textContent = "▍";
-            msgText.appendChild(caret);
-          }
-
-          container.appendChild(msgText);
-
-          // keep refs for streaming updates
-          container.__typing = { pre, caret, rawText: String(text || "") };
+        if (ch === "{") {
+          if (depth === 0) start = i;
+          depth++;
+          continue;
         }
-
-        const timeDiv = document.createElement("div");
-        timeDiv.className = "message-time";
-        timeDiv.textContent = timeHHMM();
-        container.appendChild(timeDiv);
-
-        chatBox.appendChild(container);
-        scrollToBottom(true);
-        return container;
-      }
-
-      // --- Streaming parser for n8n Webhook streaming (JSON objects) ---
-      // n8n streams multiple JSON objects back-to-back:
-      // {"type":"begin",...}{"type":"item","content":"Hi"}{"type":"end",...}
-      // We must safely extract complete JSON objects even when chunk boundaries split them.
-      function extractJsonObjectsFromBuffer(buffer) {
-        const objects = [];
-        let inStr = false, esc = false;
-        let depth = 0;
-        let start = -1;
-
-        for (let i = 0; i < buffer.length; i++) {
-          const ch = buffer[i];
-
-          if (inStr) {
-            if (esc) {
-              esc = false;
-            } else if (ch === "\\") {
-              esc = true;
-            } else if (ch === '"') {
-              inStr = false;
-            }
-            continue;
-          } else {
-            if (ch === '"') {
-              inStr = true;
-              continue;
-            }
-            if (ch === "{") {
-              if (depth === 0) start = i;
-              depth++;
-              continue;
-            }
-            if (ch === "}") {
-              if (depth > 0) depth--;
-              if (depth === 0 && start !== -1) {
-                const jsonStr = buffer.slice(start, i + 1);
-                objects.push(jsonStr);
-                start = -1;
-              }
-            }
+        if (ch === "}") {
+          if (depth > 0) depth--;
+          if (depth === 0 && start !== -1) {
+            const jsonStr = buffer.slice(start, i + 1);
+            objs.push(jsonStr);
+            lastConsumed = i + 1;
+            start = -1;
           }
         }
-
-        // remainder (incomplete JSON) = from start if we are inside an object
-        const remainder = (depth !== 0 && start !== -1) ? buffer.slice(start) : "";
-        // consumed part = buffer minus remainder, but careful if depth==0 remainder empty => consumed all
-        const consumedLength = buffer.length - remainder.length;
-        const rest = buffer.slice(consumedLength);
-
-        return { objects, rest };
       }
+    }
 
-      async function streamFromN8n({ msg, sessionId, onToken, onDone }) {
-        const res = await fetch(N8N_WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ msg, sessionId }),
-          cache: "no-store"
-        });
+    const remainder = buffer.slice(lastConsumed);
+    return { objs, remainder };
+  }
 
-        if (!res.ok) {
-          const t = await res.text().catch(() => "");
-          throw new Error(`HTTP ${res.status} ${res.statusText} :: ${t.slice(0, 200)}`);
+  async function streamFromN8n({ msg, sessionId, onToken, onDone }) {
+    const res = await fetch(N8N_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Leaving Accept broad; n8n sends application/json in your case
+        "Accept": "*/*"
+      },
+      body: JSON.stringify({ msg, sessionId }),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status} ${res.statusText} :: ${t.slice(0, 200)}`);
+    }
+
+    // If the browser/proxy buffers (common with br/gzip), we may effectively get all at once.
+    // This code handles both incremental and full-body arrival.
+    if (!res.body) {
+      const full = await res.text();
+      parseFullText(full, onToken, onDone);
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const { objs, remainder } = extractJsonObjects(buffer);
+      buffer = remainder;
+
+      for (const s of objs) {
+        let obj;
+        try { obj = JSON.parse(s); } catch { continue; }
+
+        if (obj?.type === "item" && typeof obj.content === "string") {
+          if (obj.content) onToken(obj.content);
         }
-
-        if (!res.body) {
-          // not stream-capable response body (shouldn't happen in modern browsers)
-          const t = await res.text().catch(() => "");
-          if (t) onToken(t);
+        if (obj?.type === "end") {
           onDone();
           return;
         }
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-        let buffer = "";
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-
-          // Some servers may include whitespace/newlines; OK
-          const { objects, rest } = extractJsonObjectsFromBuffer(buffer);
-          buffer = rest;
-
-          for (const jsonStr of objects) {
-            let obj;
-            try { obj = JSON.parse(jsonStr); }
-            catch { continue; }
-
-            if (obj && obj.type === "item" && typeof obj.content === "string") {
-              if (obj.content) onToken(obj.content);
-            }
-
-            if (obj && obj.type === "end") {
-              onDone();
-              return;
-            }
-          }
-        }
-
-        // flush any remaining (rare). Try one last parse if it looks complete.
-        if (buffer && buffer.trim().startsWith("{") && buffer.trim().endsWith("}")) {
-          try {
-            const obj = JSON.parse(buffer.trim());
-            if (obj?.type === "item" && typeof obj.content === "string") onToken(obj.content);
-          } catch {}
-        }
-
-        onDone();
       }
+    }
 
-      // --- Main send logic ---
-      async function sendMessage() {
-        if (isSending) return;
+    // End-of-stream: parse whatever is left (if any complete objects exist)
+    parseFullText(buffer, onToken, onDone);
+  }
 
-        const msg = input.value.trim();
-        if (!msg) return;
+  function parseFullText(text, onToken, onDone) {
+    if (!text) { onDone(); return; }
 
-        isSending = true;
-        input.value = "";
-        input.disabled = true;
-        sendBtn.disabled = true;
+    // Some proxies may insert whitespace/newlines; OK.
+    const { objs } = extractJsonObjects(text);
 
-        addMessage({ text: msg, sender: "user" });
+    let sawEnd = false;
+    for (const s of objs) {
+      try {
+        const obj = JSON.parse(s);
+        if (obj?.type === "item" && typeof obj.content === "string") {
+          if (obj.content) onToken(obj.content);
+        }
+        if (obj?.type === "end") sawEnd = true;
+      } catch {}
+    }
+    onDone();
+  }
 
-        const botMsg = addMessage({ text: "", sender: "bot", typing: true });
-        const t = botMsg.__typing;
+  async function sendMessage() {
+    if (isSending) return;
 
-        // While streaming, keep direction stable based on first non-space token
-        let dirLocked = false;
+    const msg = input.value.trim();
+    if (!msg) return;
 
-        try {
-          const sessionId = getOrCreateSessionId();
+    isSending = true;
+    input.value = "";
+    input.disabled = true;
+    sendBtn.disabled = true;
 
-          await streamFromN8n({
-            msg,
-            sessionId,
-            onToken: (token) => {
-              // lock direction once meaningful text appears
-              if (!dirLocked && token && token.trim()) {
-                const dir = detectDir(token);
-                botMsg.classList.remove("msg-rtl", "msg-ltr");
-                botMsg.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
-                dirLocked = true;
-              }
+    addMessage({ text: msg, sender: "user" });
 
-              t.rawText += token;
+    const botMsg = addMessage({ text: "", sender: "bot", typing: true });
+    const t = botMsg.__typing;
 
-              // Render progressively (safe)
-              t.pre.innerHTML = renderMarkdownLiteToHTML(t.rawText);
+    let dirLocked = false;
+    let receivedAny = false;
 
-              // Smooth autoscroll only if user near bottom
-              scrollToBottom(false);
-            },
-            onDone: () => {}
-          });
+    try {
+      const sessionId = getOrCreateSessionId();
 
-          if (t.caret) t.caret.remove();
+      await streamFromN8n({
+        msg,
+        sessionId,
+        onToken: (token) => {
+          receivedAny = true;
 
-          // Final render (in case last token includes newlines etc.)
+          if (!dirLocked && token && token.trim()) {
+            const dir = detectDir(token);
+            botMsg.classList.remove("msg-rtl", "msg-ltr");
+            botMsg.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
+            dirLocked = true;
+          }
+
+          t.rawText += token;
           t.pre.innerHTML = renderMarkdownLiteToHTML(t.rawText);
-
-          // If no content arrived, show a gentle error line
-          if (!t.rawText.trim()) {
-            t.pre.innerHTML = "پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.";
-          }
-        } catch (error) {
-          console.error("Chat Error:", error);
-          if (t.caret) t.caret.remove();
-
-          if (!t.rawText.trim()) {
-            t.pre.innerHTML = "خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.";
-          } else {
-            // If we already have partial text, keep it and add a small notice
-            t.pre.innerHTML = renderMarkdownLiteToHTML(t.rawText + "\n\n[ارتباط قطع شد — اگر لازم بود دوباره ارسال کنید]");
-          }
-        } finally {
-          isSending = false;
-          input.disabled = false;
-          sendBtn.disabled = false;
-          input.focus();
           scrollToBottom(false);
-        }
+        },
+        onDone: () => {}
+      });
+
+      if (t.caret) t.caret.remove();
+
+      if (!t.rawText.trim()) {
+        t.pre.innerHTML = "پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.";
       }
+    } catch (err) {
+      console.error("Chat Error:", err);
+      if (t.caret) t.caret.remove();
 
-      // --- Events ---
-      sendBtn.addEventListener("click", sendMessage);
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") sendMessage();
-      });
+      if (!receivedAny) {
+        t.pre.innerHTML = "خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.";
+      } else {
+        t.pre.innerHTML = renderMarkdownLiteToHTML(t.rawText + "\n\n[ارتباط قطع شد — اگر لازم بود دوباره ارسال کنید]");
+      }
+    } finally {
+      isSending = false;
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+      scrollToBottom(false);
+    }
+  }
 
-      clearBtn.addEventListener("click", () => {
-        if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
-        // keep welcome message? your choice. Here we keep it removed for a clean reset.
-        chatBox.innerHTML = "";
-        localStorage.removeItem("eveai_sessionId");
-      });
+  sendBtn.addEventListener("click", sendMessage);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") sendMessage(); });
 
-      quickButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          input.value = btn.getAttribute("data-question") || "";
-          sendMessage();
-        });
-      });
+  clearBtn.addEventListener("click", () => {
+    if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
+    chatBox.innerHTML = "";
+    localStorage.removeItem("eveai_sessionId");
+  });
+
+  quickButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      input.value = btn.getAttribute("data-question") || "";
+      sendMessage();
     });
-  </script>
+  });
+});
+</script>
 </body>
 </html>
