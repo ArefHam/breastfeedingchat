@@ -600,7 +600,7 @@
         return typingDiv;
       }
 
-      // ---------- STREAMING HANDLER - FIXED WITH DEBUG ----------
+      // ---------- STREAMING HANDLER - MANUAL JSON EXTRACTION ----------
       async function streamFromN8n(msg, sessionId, onChunk, onError) {
         const started = performance.now();
         
@@ -619,21 +619,47 @@
           }
 
           const text = await response.text();
-          console.log("📥 Raw response:", text.substring(0, 500)); // Debug: first 500 chars
+          console.log("📥 Raw response (first 500 chars):", text.substring(0, 500));
+          console.log("📏 Total response length:", text.length);
           
-          // Split by }{ pattern (where JSON objects are concatenated)
-          const chunks = text.split(/(?<=\})(?=\{)/);
-          console.log(`📦 Found ${chunks.length} JSON chunks`);
+          // Manual extraction: find each { and its matching }
+          const objects = [];
+          let i = 0;
           
-          for (const chunk of chunks) {
-            const trimmed = chunk.trim();
-            if (!trimmed) continue;
+          while (i < text.length) {
+            // Skip whitespace
+            while (i < text.length && /\s/.test(text[i])) i++;
             
+            if (i >= text.length || text[i] !== '{') break;
+            
+            // Find matching closing brace
+            let depth = 0;
+            let start = i;
+            
+            while (i < text.length) {
+              if (text[i] === '{') depth++;
+              if (text[i] === '}') {
+                depth--;
+                if (depth === 0) {
+                  i++; // include the closing brace
+                  break;
+                }
+              }
+              i++;
+            }
+            
+            const jsonStr = text.substring(start, i);
+            objects.push(jsonStr);
+          }
+          
+          console.log(`📦 Extracted ${objects.length} JSON objects`);
+          
+          // Parse and process each object
+          for (let idx = 0; idx < objects.length; idx++) {
             try {
-              const parsed = JSON.parse(trimmed);
-              console.log("✅ Parsed chunk:", parsed.type, parsed.content?.substring(0, 50));
+              const parsed = JSON.parse(objects[idx]);
+              console.log(`✅ Object ${idx + 1}:`, parsed.type, parsed.content?.substring(0, 30));
               
-              // Handle n8n streaming format
               if (parsed.type === "item" && parsed.content) {
                 onChunk(parsed.content);
               } else if (parsed.type === "end") {
@@ -641,11 +667,12 @@
                 break;
               }
             } catch (parseErr) {
-              console.error("❌ Failed to parse chunk:", trimmed.substring(0, 100), parseErr);
+              console.error(`❌ Failed to parse object ${idx + 1}:`, objects[idx].substring(0, 100), parseErr);
             }
           }
 
           const latencyMs = Math.round(performance.now() - started);
+          console.log(`⏱️ Total time: ${latencyMs}ms`);
           return latencyMs;
 
         } catch (err) {
