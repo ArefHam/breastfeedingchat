@@ -609,7 +609,10 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Accept": "text/event-stream, application/x-ndjson, application/json"
+              "Accept": "text/event-stream, application/x-ndjson, application/json",
+              // Avoid Brotli-compressed responses that some proxies send by default,
+              // which can delay chunk delivery and break streaming parsing.
+              "Accept-Encoding": "identity"
             },
             body: JSON.stringify({ msg, sessionId })
           });
