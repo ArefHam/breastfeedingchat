@@ -483,7 +483,7 @@
     </div>
   </div>
 
-  <script>
+<script>
     document.addEventListener("DOMContentLoaded", function () {
       // ✅ YOUR n8n WEBHOOK URL
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
@@ -599,7 +599,7 @@
         return container;
       }
 
-      // --- CORE LOGIC: n8n SSE Streaming ---
+      // --- CORE LOGIC: n8n SSE/NDJSON Streaming ---
       async function sendMessage() {
         if (isSending) return;
 
@@ -643,41 +643,38 @@
             const chunk = decoder.decode(value, { stream: true });
             buffer += chunk;
 
-            // 4. Parse SSE (Server-Sent Events)
-            // Lines look like: data: {"token": "word"} OR data: {"output": "word"}
+            // 4. Parse Stream (Handle both SSE "data:" and Raw JSON)
             const lines = buffer.split("\n");
             // Keep the last partial line in the buffer
             buffer = lines.pop(); 
 
             for (const line of lines) {
               const trimmed = line.trim();
-              if (!trimmed || trimmed.startsWith(":")) continue; // skip comments/empty
+              if (!trimmed) continue;
 
+              // Logic to strip "data:" prefix if present, otherwise parse raw line
+              let jsonStr = trimmed;
               if (trimmed.startsWith("data:")) {
-                const dataStr = trimmed.replace("data:", "").trim();
-                if (dataStr === "[DONE]") continue;
+                jsonStr = trimmed.replace("data:", "").trim();
+              }
 
-                try {
-                  // Attempt JSON parse
-                  const json = JSON.parse(dataStr);
-                  // n8n v1.106+ usually sends { token: "..." } or { output: "..." }
-                  const token = json.token || json.output || json.content || "";
-                  
-                  if (token) {
-                    typingState.rawText += token;
-                    // Render simplified Markdown live
-                    typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
-                    scrollToBottom();
-                  }
-                } catch (e) {
-                  // Fallback: If n8n sends raw text for some reason
-                  console.warn("Non-JSON SSE chunk:", dataStr);
-                  if (dataStr) {
-                    typingState.rawText += dataStr;
-                    typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
-                    scrollToBottom();
-                  }
+              if (jsonStr === "[DONE]") continue;
+
+              try {
+                const json = JSON.parse(jsonStr);
+                
+                // YOUR FIX: Check specifically for "content" (from your screenshot)
+                // or "output" / "token" (standard n8n formats)
+                const token = json.content || json.output || json.token || "";
+                
+                if (token) {
+                  typingState.rawText += token;
+                  // Render simplified Markdown live
+                  typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
+                  scrollToBottom();
                 }
+              } catch (e) {
+                // Ignore parsing errors for empty lines or "type: begin" messages
               }
             }
           }
