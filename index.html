@@ -46,7 +46,7 @@
       flex-direction: column;
       padding: 16px;
       gap: 12px;
-      min-height: 0; /* ✅ critical */
+      min-height: 0;
     }
 
     .header-decoration {
@@ -71,9 +71,8 @@
       overflow: hidden;
       border: 1px solid rgba(239,230,255,0.9);
       position: relative;
-
       flex: 1 1 auto;
-      min-height: 0; /* ✅ allow inner scroll */
+      min-height: 0;
     }
 
     .chat-container::before{
@@ -86,7 +85,7 @@
       z-index: 0;
     }
 
-    /* ✅ Fixed header/toolbar INSIDE container (sticky during chat scroll) */
+    /* ✅ Sticky header + quick actions */
     .sticky-top {
       position: sticky;
       top: 0;
@@ -153,7 +152,7 @@
     .quick-btn i{ color: rgba(168,85,247,0.95); }
     .quick-btn:hover { transform: translateY(-2px); border-color: rgba(168,85,247,0.45); }
 
-    /* ✅ ONLY this scrolls (organized) */
+    /* ✅ ONLY this scrolls */
     .chat-box {
       position: relative;
       z-index: 1;
@@ -172,7 +171,6 @@
       scroll-behavior: smooth;
     }
 
-    /* optional prettier scrollbar */
     .chat-box::-webkit-scrollbar { width: 10px; }
     .chat-box::-webkit-scrollbar-track { background: rgba(233,213,255,0.25); border-radius: 999px; }
     .chat-box::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.45); border-radius: 999px; }
@@ -281,11 +279,7 @@
     .msg-rtl { direction: rtl; text-align: right; }
     .msg-ltr { direction: ltr; text-align: left; }
 
-    .rendered-answer {
-      unicode-bidi: plaintext;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
+    .rendered-answer { unicode-bidi: plaintext; white-space: pre-wrap; overflow-wrap: anywhere; }
 
     .typing-caret {
       display: inline-block;
@@ -442,8 +436,6 @@
     <div class="header-decoration"></div>
 
     <div class="chat-container">
-
-      <!-- ✅ Sticky header + quick actions stay visible when chat scrolls -->
       <div class="sticky-top">
         <div class="chat-header">
           <i class="fas fa-heart"></i>
@@ -503,7 +495,6 @@
 
       let isSending = false;
 
-      // ---------- Utilities ----------
       function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
 
       function escapeHTML(str) {
@@ -519,7 +510,6 @@
         })[s]);
       }
 
-      // Markdown-lite: bold + line breaks
       function renderMarkdownLiteToHTML(rawText) {
         const text = (rawText == null) ? "" : String(rawText);
         let safe = escapeHTML(text);
@@ -528,7 +518,6 @@
         return safe;
       }
 
-      // Detect RTL/LTR per message
       function detectDir(text) {
         const s = (text == null) ? "" : String(text);
         const rtlRe = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
@@ -571,7 +560,6 @@
         return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
       }
 
-      // ---------- Message creation ----------
       function addMessage({ text, sender, metaPills = [], typing = false }) {
         const container = document.createElement("div");
         container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
@@ -587,7 +575,6 @@
           const dir = detectDir(text);
           container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
 
-          // typing container
           const wrap = document.createElement("div");
           wrap.className = "rendered-answer";
 
@@ -621,32 +608,63 @@
 
         chatBox.appendChild(container);
         scrollToBottom();
+
         return container;
       }
 
-      // ---------- Robust response extraction (JSON fallback) ----------
-      function extractAnswer(data) {
-        const candidate =
-          (data && (data.answer ?? data.response ?? data.text ?? data.output)) ??
-          (Array.isArray(data) ? (data[0]?.answer ?? data[0]?.response ?? data[0]?.text ?? data[0]?.output) : null);
+      function extractAnswerFlexible(data) {
+        // 1) string
+        if (typeof data === "string") return data;
 
-        if (candidate == null) return null;
-        if (typeof candidate === "string") return candidate;
+        // 2) common fields
+        if (data && typeof data === "object") {
+          const direct = data.answer ?? data.response ?? data.text ?? data.output;
+          if (typeof direct === "string") return direct;
 
-        try { return JSON.stringify(candidate, null, 2); } catch { return String(candidate); }
+          // 3) "All Incoming Items" may return array
+          if (Array.isArray(data)) {
+            const first = data[0];
+            const v = first?.answer ?? first?.response ?? first?.text ?? first?.output;
+            if (typeof v === "string") return v;
+            // if array of items, try join any string outputs
+            const collected = data.map(x => x?.output).filter(x => typeof x === "string");
+            if (collected.length) return collected.join("\n\n");
+          }
+        }
+
+        try { return JSON.stringify(data, null, 2); } catch { return String(data); }
       }
 
-      // ---------- Streaming fetch ----------
-      // NOTE: True streaming requires n8n Respond to Webhook to output SSE/chunked,
-      // but we still support fallback JSON (your current case).
-      async function postToN8nStreaming(msg, sessionId, onChunk) {
+      function looksLikeJSONText(s) {
+        const t = (s || "").trim();
+        return (t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"));
+      }
+
+      function parseSSEFromBuffer(buffer) {
+        // returns { events: [payloadStr...], rest }
+        const parts = buffer.split("\n\n");
+        const rest = parts.pop() || "";
+        const events = [];
+
+        for (const part of parts) {
+          const lines = part.split("\n");
+          for (const line of lines) {
+            if (!line.startsWith("data:")) continue;
+            events.push(line.replace(/^data:\s*/, ""));
+          }
+        }
+        return { events, rest };
+      }
+
+      async function postToN8nSmart(msg, sessionId, onChunk) {
         const started = performance.now();
 
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Accept": "text/event-stream, application/json"
+            // important: ask for streaming, but still accept json fallback
+            "Accept": "text/event-stream, application/json, text/plain"
           },
           body: JSON.stringify({ msg, sessionId })
         });
@@ -654,13 +672,13 @@
         const latencyMs = Math.round(performance.now() - started);
         const ct = (res.headers.get("content-type") || "").toLowerCase();
 
-        // ✅ If server returns JSON (your current workflow), fallback:
+        // A) JSON response
         if (ct.includes("application/json")) {
           const data = await res.json();
           return { mode: "json", data, latencyMs };
         }
 
-        // ✅ Stream (SSE or chunked text)
+        // B) Streaming / text
         if (!res.body) {
           const txt = await res.text().catch(() => "");
           return { mode: "text", data: { output: txt }, latencyMs };
@@ -670,58 +688,59 @@
         const decoder = new TextDecoder("utf-8");
 
         let buffer = "";
-        let sawAnyChunk = false;
+        let sawDataEvent = false;
+        let sawAny = false;
 
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
 
           const chunkStr = decoder.decode(value, { stream: true });
+          if (!chunkStr) continue;
+
+          sawAny = true;
+
+          // If it’s SSE, it’ll contain "data:" lines
           buffer += chunkStr;
 
-          // If it’s SSE, parse "data:" lines separated by blank lines.
-          // If it’s plain chunked text, we still pass through.
-          // Heuristic: if it contains "data:" treat as SSE.
           if (buffer.includes("data:")) {
-            const parts = buffer.split("\n\n");
-            buffer = parts.pop() || "";
+            const parsed = parseSSEFromBuffer(buffer);
+            buffer = parsed.rest;
 
-            for (const part of parts) {
-              const lines = part.split("\n");
-              for (const line of lines) {
-                if (!line.startsWith("data:")) continue;
-                const payload = line.replace(/^data:\s*/, "");
+            for (const payload of parsed.events) {
+              if (!payload) continue;
+              if (payload === "[DONE]" || payload === "DONE") continue;
 
-                if (payload === "[DONE]" || payload === "DONE") {
-                  sawAnyChunk = true;
-                  continue;
-                }
+              sawDataEvent = true;
 
-                // payload can be JSON or raw text
-                let token = payload;
+              // payload may be json token or raw string
+              if (looksLikeJSONText(payload)) {
                 try {
                   const obj = JSON.parse(payload);
-                  token = obj.token ?? obj.delta ?? obj.text ?? obj.output ?? obj.content ?? payload;
-                } catch {}
-
-                if (token) {
-                  sawAnyChunk = true;
-                  onChunk(String(token));
+                  const token = obj.token ?? obj.delta ?? obj.text ?? obj.output ?? obj.content;
+                  if (typeof token === "string" && token.length) onChunk(token);
+                  else onChunk(payload);
+                } catch {
+                  onChunk(payload);
                 }
+              } else {
+                onChunk(payload);
               }
             }
           } else {
-            // plain chunked text stream
-            sawAnyChunk = true;
+            // plain chunked text (no data:)
+            // flush buffer immediately as chunks
             onChunk(chunkStr);
             buffer = "";
           }
         }
 
-        return { mode: sawAnyChunk ? "stream" : "text", data: null, latencyMs };
+        // If we ended and buffer still has data (rare), flush it
+        if (buffer && !sawDataEvent) onChunk(buffer);
+
+        return { mode: sawDataEvent ? "stream" : (sawAny ? "text" : "empty"), data: null, latencyMs };
       }
 
-      // ---------- Main send logic ----------
       async function sendMessage() {
         if (isSending) return;
 
@@ -743,7 +762,6 @@
         try {
           const sessionId = getOrCreateSessionId();
 
-          // Create bot message in typing mode
           const botMsg = addMessage({
             text: "",
             sender: "bot",
@@ -753,26 +771,28 @@
           const t = botMsg.__typing;
 
           const onChunk = (chunk) => {
-            t.rawText += chunk;
+            t.rawText += String(chunk);
             t.pre.textContent = t.rawText;
             scrollToBottom();
           };
 
-          const result = await postToN8nStreaming(msg, sessionId, onChunk);
+          const result = await postToN8nSmart(msg, sessionId, onChunk);
 
           if (typingIndicator?.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
 
-          // JSON fallback (your current workflow)
+          // fallback if JSON
           if (result.mode === "json") {
-            const answer = extractAnswer(result.data);
+            const answer = extractAnswerFlexible(result.data);
             t.rawText = answer || "پاسخ نامعتبر از سرور دریافت شد.";
+            t.pre.textContent = t.rawText;
+          } else if (result.mode === "empty") {
+            t.rawText = "هیچ محتوایی از سرور دریافت نشد. (احتمالاً تنظیمات Respond to Webhook یا Proxy در حال Buffer کردن است)";
             t.pre.textContent = t.rawText;
           }
 
           // stop caret
           t.caret.textContent = "";
 
-          // latency pill
           const latencyPill =
             result.latencyMs < 8000
               ? { label: `⏱ ${result.latencyMs}ms`, cls: "ok" }
@@ -781,13 +801,13 @@
           const modePill =
             (result.mode === "stream")
               ? { label: "✅ Stream", cls: "ok" }
-              : { label: "⚠️ JSON", cls: "warn" };
+              : (result.mode === "json")
+                ? { label: "⚠️ JSON", cls: "warn" }
+                : { label: "ℹ️ Text", cls: "info" };
 
-          // Replace with HTML-safe markdown-lite
           botMsg.querySelector(".message-text").innerHTML =
             `<div class="rendered-answer">${renderMarkdownLiteToHTML(t.rawText)}</div>`;
 
-          // Update pills
           const timeDiv = botMsg.querySelector(".message-time");
           timeDiv.innerHTML = [latencyPill, modePill, { label: timeHHMM(), cls: "" }]
             .map(p => pillHTML(p.label, p.cls)).join(" ");
@@ -807,7 +827,6 @@
         }
       }
 
-      // ---------- Clear behavior ----------
       clearBtn.addEventListener("click", function () {
         if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
 
@@ -821,7 +840,6 @@
         });
       });
 
-      // ---------- Events ----------
       sendBtn.addEventListener("click", sendMessage);
       input.addEventListener("keydown", function (e) {
         if (e.key === "Enter") sendMessage();
