@@ -572,26 +572,30 @@
 
             buffer += decoder.decode(value, { stream: true });
             
-            // Split by newline to handle NDJSON
+            // ✅ SPLIT BY NEWLINE: n8n sends one JSON object per line
             const lines = buffer.split("\n");
-            buffer = lines.pop(); // Keep incomplete line in buffer
+            
+            // Keep the last line in the buffer because it might be incomplete (half a JSON object)
+            buffer = lines.pop(); 
 
             for (const line of lines) {
               const trimmed = line.trim();
               if (!trimmed) continue;
 
               try {
-                // ✅ PARSER FIX: Directly parse the JSON line
+                // ✅ PARSE DIRECTLY (No "data:" check needed)
                 const json = JSON.parse(trimmed);
 
-                // Handle the exact format from your logs: {"type": "item", "content": "..."}
-                if (json.type === "item" && json.content) {
+                // ✅ HANDLE SPECIFIC n8n FORMAT (shown in your screenshot)
+                if (json.content) {
                   typingState.rawText += json.content;
                   typingState.pre.innerHTML = renderMarkdownLiteToHTML(typingState.rawText);
                   scrollToBottom();
                 }
+                // We ignore "type": "begin" and "type": "end" silently
               } catch (e) {
-                console.warn("Skipping non-JSON line:", trimmed);
+                // If a line is malformed, we skip it instead of erroring
+                console.warn("Skipping invalid JSON line:", trimmed);
               }
             }
           }
