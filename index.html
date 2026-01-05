@@ -600,7 +600,7 @@
         return typingDiv;
       }
 
-      // ---------- STREAMING HANDLER - THE FIX! ----------
+      // ---------- STREAMING HANDLER - FIXED WITH DEBUG ----------
       async function streamFromN8n(msg, sessionId, onChunk, onError) {
         const started = performance.now();
         
@@ -618,49 +618,30 @@
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
+          const text = await response.text();
+          console.log("📥 Raw response:", text.substring(0, 500)); // Debug: first 500 chars
+          
+          // Split by }{ pattern (where JSON objects are concatenated)
+          const chunks = text.split(/(?<=\})(?=\{)/);
+          console.log(`📦 Found ${chunks.length} JSON chunks`);
+          
+          for (const chunk of chunks) {
+            const trimmed = chunk.trim();
+            if (!trimmed) continue;
             
-            // Process complete JSON objects from buffer
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || trimmed.startsWith('{') === false) continue;
-
-              try {
-                const parsed = JSON.parse(trimmed);
-                
-                // Handle n8n streaming format
-                if (parsed.type === "item" && parsed.content) {
-                  onChunk(parsed.content);
-                } else if (parsed.type === "end") {
-                  // Stream completed
-                  break;
-                }
-              } catch (parseErr) {
-                console.warn("Failed to parse chunk:", trimmed);
-              }
-            }
-          }
-
-          // Process any remaining buffer
-          if (buffer.trim()) {
             try {
-              const parsed = JSON.parse(buffer.trim());
+              const parsed = JSON.parse(trimmed);
+              console.log("✅ Parsed chunk:", parsed.type, parsed.content?.substring(0, 50));
+              
+              // Handle n8n streaming format
               if (parsed.type === "item" && parsed.content) {
                 onChunk(parsed.content);
+              } else if (parsed.type === "end") {
+                console.log("🏁 Stream ended");
+                break;
               }
-            } catch (err) {
-              console.warn("Failed to parse final buffer:", buffer);
+            } catch (parseErr) {
+              console.error("❌ Failed to parse chunk:", trimmed.substring(0, 100), parseErr);
             }
           }
 
@@ -668,6 +649,7 @@
           return latencyMs;
 
         } catch (err) {
+          console.error("🚨 Stream error:", err);
           onError(err);
           throw err;
         }
