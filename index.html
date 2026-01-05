@@ -25,7 +25,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
 
-    /* ✅ stop whole-page scroll; only chat scrolls */
+    /* ✅ Body Background */
     body {
       font-family: 'Vazirmatn', sans-serif;
       direction: rtl;
@@ -85,7 +85,7 @@
       z-index: 0;
     }
 
-    /* ✅ Sticky header + quick actions */
+    /* ✅ Sticky Header */
     .sticky-top {
       position: sticky;
       top: 0;
@@ -152,7 +152,7 @@
     .quick-btn i{ color: rgba(168,85,247,0.95); }
     .quick-btn:hover { transform: translateY(-2px); border-color: rgba(168,85,247,0.45); }
 
-    /* ✅ ONLY this scrolls */
+    /* ✅ Chat Area */
     .chat-box {
       position: relative;
       z-index: 1;
@@ -170,11 +170,9 @@
       gap: 14px;
       scroll-behavior: smooth;
     }
-
     .chat-box::-webkit-scrollbar { width: 10px; }
     .chat-box::-webkit-scrollbar-track { background: rgba(233,213,255,0.25); border-radius: 999px; }
     .chat-box::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.45); border-radius: 999px; }
-    .chat-box::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.65); }
 
     .welcome-message {
       background:
@@ -199,6 +197,7 @@
     }
     .welcome-text { color: #4b5563; line-height: 1.85; font-size: 15px; }
 
+    /* ✅ Messages */
     .message {
       margin: 5px 0;
       padding: 14px 16px;
@@ -210,10 +209,7 @@
       animation: fadeIn 0.25s ease-in-out;
       border: 1px solid transparent;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     .user-message {
       background:
@@ -268,17 +264,10 @@
       border: 1px solid rgba(221,214,254,0.9);
     }
 
-    .message-text {
-      font-size: 16px;
-      line-height: 1.95;
-      word-break: break-word;
-      letter-spacing: 0.1px;
-    }
+    .message-text { font-size: 16px; line-height: 1.95; word-break: break-word; letter-spacing: 0.1px; }
     .message-text strong{ font-weight: 800; }
-
     .msg-rtl { direction: rtl; text-align: right; }
     .msg-ltr { direction: ltr; text-align: left; }
-
     .rendered-answer { unicode-bidi: plaintext; white-space: pre-wrap; overflow-wrap: anywhere; }
 
     .typing-caret {
@@ -305,19 +294,6 @@
     }
     .user-message .message-time { color: rgba(255,255,255,0.92); justify-content: flex-start; }
     .bot-message .message-time  { justify-content: flex-end; }
-
-    .pill {
-      font-size: 11px;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(233,213,255,0.9);
-      background: rgba(243,232,255,0.7);
-      color: #6d28d9;
-      white-space: nowrap;
-    }
-    .pill.ok   { border-color: rgba(34,197,94,0.25);  background: rgba(34,197,94,0.10);  color: #166534; }
-    .pill.warn { border-color: rgba(249,115,22,0.25); background: rgba(249,115,22,0.10); color: #9a3412; }
-    .pill.info { border-color: rgba(59,130,246,0.22); background: rgba(59,130,246,0.10); color: #1d4ed8; }
 
     .input-area {
       z-index: 2;
@@ -392,32 +368,6 @@
       flex: 0 0 auto;
     }
     .footer-info i { color: rgba(168,85,247,0.95); }
-
-    .typing-indicator {
-      display: flex;
-      padding: 14px 14px;
-      background: linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(240,249,255,0.88) 100%);
-      border: 1px solid rgba(233,213,255,0.9);
-      border-radius: 18px;
-      width: fit-content;
-      margin-right: auto;
-      margin-left: 44px;
-      align-items: center;
-      gap: 10px;
-      min-width: 160px;
-      box-shadow: 0 12px 22px rgba(88, 28, 135, 0.08);
-    }
-    .typing-text { color: #6d28d9; font-size: 14px; font-weight: 600; }
-    .typing-dots { display: flex; gap: 6px; }
-    .typing-dots span {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: linear-gradient(180deg, rgba(168,85,247,0.95), rgba(139,92,246,0.9));
-      animation: dots 1.4s infinite ease-in-out;
-    }
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes dots { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
 
     @media (max-width: 768px) {
       .page { padding: 10px; gap: 10px; }
@@ -575,14 +525,12 @@
 
             buffer += decoder.decode(value, { stream: true });
             
-            // Fix: Regex to separate stuck JSON objects like "}{" -> "}\n{"
-            // This happens if network packets merge
+            // ✅ Fix: Regex to separate stuck JSON objects like "}{" -> "}\n{"
             buffer = buffer.replace(/\}\s*\{/g, '}\n{');
 
             const lines = buffer.split("\n");
             
-            // IMPORTANT CHANGE: We don't blindly pop() the last line.
-            // We reset buffer and try to process everything. 
+            // ✅ IMPORTANT: Reset buffer and try to process everything.
             // If the last line fails to parse, ONLY THEN we put it back in buffer.
             buffer = ""; 
 
@@ -594,7 +542,7 @@
               const success = processLine(line);
               
               if (!success && i === lines.length - 1) {
-                // If the LAST line failed, it's likely incomplete. Save it.
+                // If the LAST line failed, it's likely incomplete. Save it for next chunk.
                 buffer = line;
               }
             }
