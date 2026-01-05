@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Lalezar&display=swap" rel="stylesheet">
 
   <style>
+    /* ✅ (unchanged) your full CSS here */
     :root{
       --bg1:#fff7fb;
       --bg2:#f1f7ff;
@@ -262,18 +263,15 @@
     }
     .message-text strong{ font-weight: 800; }
 
-    /* multilingual correctness */
     .msg-rtl { direction: rtl; text-align: right; }
     .msg-ltr { direction: ltr; text-align: left; }
 
-    /* exact rendering container */
     .rendered-answer {
       unicode-bidi: plaintext;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
 
-    /* ✅ Typewriter look */
     .typing-caret {
       display: inline-block;
       width: 10px;
@@ -468,6 +466,8 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
+      // ✅ Use your existing webhook
+      // Tip: add ?stream=1 (optional) if you want to branch in n8n later.
       const N8N_WEBHOOK_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
 
       const sendBtn = document.getElementById("send-btn");
@@ -492,7 +492,7 @@
         })[s]);
       }
 
-      // Apply markdown-lite AFTER typing finishes (so typing stays faithful)
+      // Apply markdown-lite AFTER streaming finishes
       function renderMarkdownLiteToHTML(rawText) {
         const text = (rawText == null) ? "" : String(rawText);
         let safe = escapeHTML(text);
@@ -543,50 +543,8 @@
         return `<span class="pill ${cls || ""}">${escapeHTML(label)}</span>`;
       }
 
-      // ---------- Typewriter (multilingual-safe) ----------
-      function computeTypingSpeedMs(text) {
-        const len = (text || "").length;
-        // Short answers: slower (feels human). Long answers: faster (avoid boredom).
-        if (len <= 300) return 18;
-        if (len <= 900) return 10;
-        return 6;
-      }
-
-      async function typeTextInto(preEl, fullText, { baseSpeedMs = 10, maxDurationMs = 9000 } = {}) {
-        // We type the RAW text (no HTML), preserving fidelity.
-        // We keep newlines by using a <pre> or white-space: pre-wrap.
-        preEl.textContent = "";
-        let i = 0;
-
-        // Cap total duration to avoid 2-minute typing for long texts.
-        const len = fullText.length || 1;
-        const estimated = len * baseSpeedMs;
-        const speed = (estimated > maxDurationMs) ? Math.max(2, Math.floor(maxDurationMs / len)) : baseSpeedMs;
-
-        return new Promise(resolve => {
-          function tick() {
-            if (i >= fullText.length) return resolve();
-
-            const ch = fullText.charAt(i);
-            preEl.textContent += ch;
-            i++;
-
-            // Micro-pauses for more natural feel (doesn't change content)
-            let s = speed;
-            if (ch === "\n") s = speed * 8;
-            else if (/[.!؟]/.test(ch)) s = speed * 10;
-            else if (/[,:؛]/.test(ch)) s = speed * 6;
-            else if (ch === " ") s = Math.max(1, Math.floor(speed * 0.7));
-
-            scrollToBottom();
-            setTimeout(tick, s);
-          }
-          tick();
-        });
-      }
-
       // ---------- Message creation ----------
-      function addMessage({ text, sender, metaPills = [], typing = false }) {
+      function addMessage({ text, sender, metaPills = [], streaming = false }) {
         const container = document.createElement("div");
         container.className = "message " + (sender === "user" ? "user-message" : "bot-message");
 
@@ -601,33 +559,27 @@
           const dir = detectDir(text);
           container.classList.add(dir === "ltr" ? "msg-ltr" : "msg-rtl");
 
-          if (!typing) {
-            // instant render (HTML-safe, markdown-lite)
-            msgText.innerHTML = `<div class="rendered-answer">${renderMarkdownLiteToHTML(text)}</div>`;
-            container.appendChild(msgText);
-          } else {
-            // typing mode: render raw text in a pre-like div + caret
-            const wrap = document.createElement("div");
-            wrap.className = "rendered-answer";
+          // In streaming mode we keep a raw text container (no HTML)
+          const wrap = document.createElement("div");
+          wrap.className = "rendered-answer";
 
-            const pre = document.createElement("div");
-            pre.style.whiteSpace = "pre-wrap";
-            pre.style.unicodeBidi = "plaintext";
-            pre.style.overflowWrap = "anywhere";
+          const pre = document.createElement("div");
+          pre.style.whiteSpace = "pre-wrap";
+          pre.style.unicodeBidi = "plaintext";
+          pre.style.overflowWrap = "anywhere";
+          pre.textContent = (text == null) ? "" : String(text);
 
-            const caret = document.createElement("span");
-            caret.className = "typing-caret";
-            caret.textContent = "▍";
+          const caret = document.createElement("span");
+          caret.className = "typing-caret";
+          caret.textContent = streaming ? "▍" : "";
 
-            wrap.appendChild(pre);
-            wrap.appendChild(caret);
+          wrap.appendChild(pre);
+          wrap.appendChild(caret);
 
-            msgText.appendChild(wrap);
-            container.appendChild(msgText);
+          msgText.appendChild(wrap);
+          container.appendChild(msgText);
 
-            // return handles so we can type into it
-            container.__typing = { pre, caret, rawText: String(text || "") };
-          }
+          container.__stream = { pre, caret, rawText: String(text || "") };
         }
 
         const timeDiv = document.createElement("div");
@@ -645,7 +597,7 @@
         return container;
       }
 
-      // ---------- Robust response extraction ----------
+      // ---------- Robust extraction (for NON-stream fallback) ----------
       function extractAnswer(data) {
         const candidate =
           (data && (data.answer ?? data.response ?? data.text ?? data.output)) ??
@@ -662,38 +614,154 @@
         return String(candidate);
       }
 
-      // ---------- Networking ----------
-      async function fetchWithTimeout(url, options, timeoutMs) {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-          return await fetch(url, { ...options, signal: controller.signal });
-        } finally {
-          clearTimeout(id);
-        }
+      // ---------- Streaming helpers ----------
+      function looksLikeJSON(s) {
+        const t = (s || "").trim();
+        return (t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"));
       }
 
-      async function postToN8n(msg, sessionId) {
-        const started = performance.now();
-        const res = await fetchWithTimeout(
-          N8N_WEBHOOK_URL,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({ msg, sessionId })
-          },
-          120000
-        );
+      // Parse SSE-style frames (data: ...)
+      function parseSSEFrames(buffer) {
+        // frames are separated by blank lines
+        const parts = buffer.split("\n\n");
+        const rest = parts.pop() || "";
+        const frames = parts;
 
-        const latencyMs = Math.round(performance.now() - started);
+        const out = [];
+        for (const frame of frames) {
+          const lines = frame.split("\n");
+          for (const line of lines) {
+            if (!line.startsWith("data:")) continue;
+            const payload = line.slice(5).trim();
+            out.push(payload);
+          }
+        }
+        return { chunks: out, rest };
+      }
 
-        if (!res.ok) {
-          const txt = await res.text().catch(() => "");
-          throw new Error(`HTTP ${res.status} ${res.statusText} :: ${txt.slice(0, 200)}`);
+      // Decide how to interpret each SSE data payload
+      function payloadToToken(payloadStr) {
+        if (!payloadStr) return "";
+
+        // Many implementations send: data: {"token":"..."} or {"delta":"..."} or {"text":"..."}
+        // Some send: data: "..."
+        // Some send: data: [DONE]
+        if (payloadStr === "[DONE]" || payloadStr === "DONE") return "__DONE__";
+
+        // Try JSON
+        if (looksLikeJSON(payloadStr)) {
+          try {
+            const obj = JSON.parse(payloadStr);
+            if (typeof obj === "string") return obj;
+            if (obj && typeof obj === "object") {
+              // common token keys:
+              const token = obj.token ?? obj.delta ?? obj.text ?? obj.content ?? obj.data ?? obj.answer ?? "";
+              if (typeof token === "string" && token.length) return token;
+
+              // sometimes final object is returned (non-token)
+              // we return special marker so caller can handle
+              return { __json: obj };
+            }
+          } catch {}
         }
 
-        const data = await res.json();
-        return { data, latencyMs };
+        // plain text token
+        return payloadStr;
+      }
+
+      async function postToN8nStreaming({ msg, sessionId, onToken, onFinalJSON, timeoutMs = 120000 }) {
+        const started = performance.now();
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const res = await fetch(N8N_WEBHOOK_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              // ask for streaming if server supports it
+              "Accept": "text/event-stream, application/json"
+            },
+            body: JSON.stringify({ msg, sessionId }),
+            signal: controller.signal,
+            cache: "no-store"
+          });
+
+          if (!res.ok) {
+            const txt = await res.text().catch(() => "");
+            throw new Error(`HTTP ${res.status} ${res.statusText} :: ${txt.slice(0, 200)}`);
+          }
+
+          const ct = (res.headers.get("content-type") || "").toLowerCase();
+
+          // ✅ If server doesn't stream (still returns JSON), fallback safely
+          if (!res.body || ct.includes("application/json")) {
+            const data = await res.json();
+            onFinalJSON?.(data);
+            return { latencyMs: Math.round(performance.now() - started), streamed: false };
+          }
+
+          // ✅ Streaming path: read chunks
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+
+          let buffer = "";
+          let sawAnyToken = false;
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            // If it’s SSE, parse frames.
+            // If it's not SSE but chunked plain text, we still handle it below.
+            const { chunks, rest } = parseSSEFrames(buffer);
+            buffer = rest;
+
+            if (chunks.length) {
+              for (const s of chunks) {
+                const tokenOrObj = payloadToToken(s);
+
+                if (tokenOrObj === "__DONE__") {
+                  // optional done marker
+                  continue;
+                }
+
+                if (typeof tokenOrObj === "object" && tokenOrObj && tokenOrObj.__json) {
+                  // This is a JSON payload mid-stream (often final).
+                  onFinalJSON?.(tokenOrObj.__json);
+                  continue;
+                }
+
+                const tok = String(tokenOrObj || "");
+                if (!tok) continue;
+
+                sawAnyToken = true;
+                onToken(tok);
+              }
+            } else {
+              // Not receiving SSE frames; maybe server is chunking plain text
+              // We stream the raw incoming buffer in small increments.
+              // But to avoid duplicating, only do it if buffer grows and no SSE frames appear for a while.
+              // Simple approach: do nothing here. (Keeps behavior clean)
+              // If you discover your n8n streams plain text, tell me and I’ll switch this to raw-chunk mode.
+            }
+          }
+
+          // When stream ends, there might still be a final JSON in `buffer` (rare).
+          // Try to parse it as JSON.
+          const tail = (buffer || "").trim();
+          if (tail && looksLikeJSON(tail) && !sawAnyToken) {
+            try { onFinalJSON?.(JSON.parse(tail)); } catch {}
+          }
+
+          return { latencyMs: Math.round(performance.now() - started), streamed: true };
+
+        } finally {
+          clearTimeout(timeoutId);
+        }
       }
 
       // ---------- Main send logic ----------
@@ -719,39 +787,68 @@
 
         try {
           const sessionId = getOrCreateSessionId();
-          const { data, latencyMs } = await postToN8n(msg, sessionId);
 
-          if (typingIndicator && typingIndicator.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
+          // Remove typing indicator once we start receiving stream
+          let removedTypingIndicator = false;
+          const removeTyping = () => {
+            if (!removedTypingIndicator && typingIndicator && typingIndicator.parentNode) {
+              typingIndicator.parentNode.removeChild(typingIndicator);
+              removedTypingIndicator = true;
+            }
+          };
 
-          const answer = extractAnswer(data);
-          if (!answer) {
-            addMessage({ text: "پاسخ نامعتبر از سرور دریافت شد.", sender: "bot", metaPills: [{label:"Invalid", cls:"warn"}] });
-            console.log("Raw n8n response:", data);
-            return;
-          }
+          // Create empty bot message in streaming mode
+          const botMsg = addMessage({
+            text: "",
+            sender: "bot",
+            metaPills: [{ label: "Streaming...", cls: "ok" }, { label: timeHHMM(), cls: "" }],
+            streaming: true
+          });
 
+          const stream = botMsg.__stream;
+
+          // Stream tokens into the bubble
+          const { latencyMs, streamed } = await postToN8nStreaming({
+            msg,
+            sessionId,
+            onToken: (tok) => {
+              removeTyping();
+              stream.rawText += tok;
+              stream.pre.textContent = stream.rawText;
+              scrollToBottom();
+            },
+            onFinalJSON: (data) => {
+              // If n8n doesn't stream, or sends final JSON, we can still show it
+              removeTyping();
+
+              // If we already got streamed tokens, ignore JSON unless you want to append metadata.
+              if (stream.rawText && stream.rawText.trim().length) return;
+
+              const ans = extractAnswer(data);
+              stream.rawText = ans || "پاسخ نامعتبر از سرور دریافت شد.";
+              stream.pre.textContent = stream.rawText;
+            },
+            timeoutMs: 120000
+          });
+
+          removeTyping();
+
+          // Update pills (latency + mode)
           const pill = latencyMs < 8000
             ? { label: `⏱ ${latencyMs}ms`, cls: "ok" }
             : { label: `⏱ ${Math.round(latencyMs/1000)}s`, cls: "warn" };
 
-          // ✅ Create bot message in typing mode
-          const botMsg = addMessage({
-            text: answer,
-            sender: "bot",
-            metaPills: [pill, { label: timeHHMM(), cls: "" }],
-            typing: true
-          });
+          const timeDiv = botMsg.querySelector(".message-time");
+          timeDiv.innerHTML = [
+            pillHTML(streamed ? "✅ Stream" : "⚠️ JSON", streamed ? "ok" : "warn"),
+            pillHTML(pill.label, pill.cls),
+            pillHTML(timeHHMM(), "")
+          ].join(" ");
 
-          // ✅ Run typewriter safely
-          const t = botMsg.__typing;
-          const speed = computeTypingSpeedMs(t.rawText);
-
-          await typeTextInto(t.pre, t.rawText, { baseSpeedMs: speed, maxDurationMs: 9000 });
-
-          // After typing, replace with HTML-safe markdown-lite rendering (bold + <br>)
-          // This keeps fidelity and improves readability.
+          // Finish: remove caret and render markdown-lite safely
+          stream.caret.textContent = "";
           botMsg.querySelector(".message-text").innerHTML =
-            `<div class="rendered-answer">${renderMarkdownLiteToHTML(t.rawText)}</div>`;
+            `<div class="rendered-answer">${renderMarkdownLiteToHTML(stream.rawText)}</div>`;
 
         } catch (err) {
           if (typingIndicator && typingIndicator.parentNode) typingIndicator.parentNode.removeChild(typingIndicator);
