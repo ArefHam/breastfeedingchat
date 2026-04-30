@@ -3,592 +3,182 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>گپ و گفت مادرانه - راهنمای شیردهی</title>
+  <title>دستیار تغذیه نوزاد</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&family=Lalezar&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg1:#fff7fb; --bg2:#f1f7ff; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
-      --p1:#a855f7; --p2:#8b5cf6; --p3:#ec4899; --line:#efe6ff; --soft:#faf7ff;
-      --shadow: 0 18px 55px rgba(88, 28, 135, 0.14);
-      --shadow2: 0 10px 25px rgba(17, 24, 39, 0.06);
-      --r-lg:22px; --r-md:16px; --r-sm:12px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
-    body {
-      font-family: 'Vazirmatn', sans-serif; direction: rtl; color: var(--ink);
-      background: radial-gradient(1200px 600px at 20% -10%, rgba(168,85,247,0.22), transparent 60%),
-                  radial-gradient(1000px 500px at 90% 0%, rgba(34,197,94,0.10), transparent 55%),
-                  radial-gradient(1100px 600px at 60% 110%, rgba(236,72,153,0.12), transparent 60%),
-                  linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
-      overflow-x: hidden;
-    }
-    ::selection{ background: rgba(168,85,247,0.25); }
-
-    .header-decoration {
-      height: 6px;
-      background: linear-gradient(to left, #6fd2ff, #a18aff, #ff9cee);
-      border-radius: 0 0 10px 10px;
-      box-shadow: 0 8px 20px rgba(168,85,247,0.15);
-    }
-
-    .chat-container {
-      width: 920px; max-width: 95%; margin: 22px auto;
-      background: rgba(255,255,255,0.80); backdrop-filter: blur(10px);
-      border-radius: var(--r-lg); box-shadow: var(--shadow);
-      display: flex; flex-direction: column; overflow: hidden;
-      border: 1px solid rgba(239,230,255,0.9); min-height: 90vh; position: relative;
-    }
-
-    .chat-container::before{
-      content:""; position:absolute; inset:0; pointer-events:none;
-      background: linear-gradient(180deg, rgba(168,85,247,0.10), transparent 22%, transparent 78%, rgba(34,197,94,0.06));
-      opacity: 0.8;
-    }
-
-    .chat-header {
-      background: radial-gradient(700px 180px at 30% 20%, rgba(255,255,255,0.18), transparent 60%),
-                  linear-gradient(135deg, var(--p1) 0%, var(--p2) 45%, rgba(34,197,94,0.18) 140%);
-      color: #fff; padding: 18px 18px 16px; text-align: center;
-      font-family: 'Lalezar', cursive; position: relative;
-      display: flex; align-items: center; justify-content: center; gap: 14px; z-index: 1;
-      border-bottom: 1px solid rgba(255,255,255,0.12);
-    }
-    .chat-header::after{
-      content:""; position:absolute; bottom:0; left:0; right:0; height: 1px;
-      background: linear-gradient(to left, rgba(255,255,255,0.35), rgba(255,255,255,0.08), rgba(255,255,255,0.35));
-      opacity: 0.9;
-    }
-    .chat-header i { font-size: 26px; opacity: 0.95; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12)); }
-    .chat-header > div{ line-height: 1.2; }
-    .chat-header > div:first-child{ font-size: 26px; letter-spacing: 0.2px; }
-    .header-subtitle {
-      font-size: 14px; font-weight: 400; margin-top: 6px; opacity: 0.92;
-      font-family: 'Vazirmatn', sans-serif;
-    }
-
-    .quick-actions {
-      display: flex; flex-wrap: wrap; gap: 10px; padding: 12px 14px 8px;
-      background: rgba(252,250,255,0.92); border-bottom: 1px solid rgba(239,230,255,0.8); z-index: 1;
-    }
-    .quick-btn {
-      padding: 10px 14px;
-      background: radial-gradient(240px 100px at 20% 20%, rgba(255,255,255,0.60), transparent 60%),
-                  linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(237,233,254,0.92) 55%, rgba(240,249,255,0.75) 120%);
-      border: 1px solid rgba(221,214,254,0.75); border-radius: 999px; cursor: pointer;
-      font-size: 14px; color: #5b21b6; transition: 0.18s ease;
-      font-family: 'Vazirmatn', sans-serif; display: inline-flex; align-items: center; gap: 8px;
-      box-shadow: 0 10px 18px rgba(17,24,39,0.05);
-    }
-    .quick-btn i{ color: rgba(168,85,247,0.95); }
-    .quick-btn:hover { transform: translateY(-2px); border-color: rgba(168,85,247,0.45); }
-
-    .chat-box {
-      flex: 1; height: 520px; overflow-y: auto; padding: 20px 16px 22px 18px;
-      background: radial-gradient(700px 260px at 80% 0%, rgba(168,85,247,0.08), transparent 60%),
-                  radial-gradient(700px 260px at 10% 100%, rgba(34,197,94,0.06), transparent 60%),
-                  var(--soft);
-      display: flex; flex-direction: column; gap: 14px; overflow-x: hidden; z-index: 1;
-    }
-
-    .welcome-message {
-      background: radial-gradient(500px 200px at 20% 0%, rgba(168,85,247,0.14), transparent 60%),
-                  linear-gradient(135deg, #eef2ff 0%, #fff1fb 60%, #f5fffb 140%);
-      padding: 18px 18px; border-radius: var(--r-md); margin-bottom: 12px;
-      border-right: 6px solid var(--p1); text-align: center; box-shadow: var(--shadow2);
-    }
-    .welcome-title {
-      font-size: 20px; color: #6d28d9; margin-bottom: 10px; font-weight: 800;
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-    .welcome-text { color: #4b5563; line-height: 1.85; font-size: 15px; }
-
-    .message {
-      margin: 5px 0; padding: 14px 16px; border-radius: 18px; max-width: 78%;
-      word-wrap: break-word; box-shadow: 0 10px 24px rgba(17,24,39,0.06);
-      position: relative; animation: fadeIn 0.25s ease-in-out; border: 1px solid transparent;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .user-message {
-      background: radial-gradient(400px 140px at 30% 20%, rgba(255,255,255,0.18), transparent 60%),
-                  linear-gradient(135deg, var(--p1) 0%, var(--p2) 80%);
-      color: white; margin-left: auto; border-bottom-right-radius: 6px;
-      text-align: right; margin-right: 44px; border: 1px solid rgba(255,255,255,0.12);
-    }
-    .bot-message {
-      background: rgba(255,255,255,0.92); border: 1px solid rgba(233,213,255,0.95);
-      margin-right: auto; border-bottom-left-radius: 6px; margin-left: 44px;
-      box-shadow: 0 12px 28px rgba(88, 28, 135, 0.08);
-    }
-
-    .bot-message::before {
-      content: "🤱"; position: absolute; left: -48px; top: 14px; font-size: 21px;
-      background: rgba(243,232,255,0.95); width: 40px; height: 40px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 10px 20px rgba(168,85,247,0.14); border: 1px solid rgba(233,213,255,0.9);
-    }
-    .user-message::after {
-      content: "💬"; position: absolute; right: -48px; top: 14px; font-size: 21px;
-      background: rgba(237,233,254,0.95); width: 40px; height: 40px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 10px 20px rgba(139,92,246,0.16); border: 1px solid rgba(221,214,254,0.9);
-    }
-
-    .message-text {
-      font-size: 16px; line-height: 1.95; word-break: break-word; letter-spacing: 0.1px;
-    }
-    .message-text strong{ font-weight: 800; }
-
-    .msg-rtl { direction: rtl; text-align: right; }
-    .msg-ltr { direction: ltr; text-align: left; }
-
-    .typing-caret {
-      display: inline-block; width: 10px; margin-inline-start: 2px; opacity: 0.9;
-      animation: caretBlink 0.9s infinite; color: rgba(109,40,217,0.95); font-weight: 800;
-    }
-    @keyframes caretBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
-
-    .message-time {
-      font-size: 12px; opacity: 0.75; margin-top: 9px; color: rgba(75,85,99,0.8);
-      display: flex; align-items: center; gap: 10px;
-    }
-    .user-message .message-time { color: rgba(255,255,255,0.92); justify-content: flex-start; }
-    .bot-message .message-time  { justify-content: flex-end; }
-
-    .pill {
-      font-size: 11px; padding: 5px 10px; border-radius: 999px;
-      border: 1px solid rgba(233,213,255,0.9); background: rgba(243,232,255,0.7); color: #6d28d9;
-    }
-    .pill.ok { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.10); color: #166534; }
-    .pill.warn { border-color: rgba(249,115,22,0.25); background: rgba(249,115,22,0.10); color: #9a3412; }
-
-    .input-area {
-      display: flex; gap: 10px; padding: 16px 16px 18px;
-      border-top: 1px solid rgba(239,230,255,0.95);
-      background: linear-gradient(180deg, rgba(252,250,255,0.96) 0%, rgba(250,247,255,0.92) 100%);
-      z-index: 1;
-    }
-    input {
-      flex: 1; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(221,221,221,0.9);
-      font-size: 16px; font-family: 'Vazirmatn', sans-serif; transition: all 0.25s;
-      background: rgba(255,255,255,0.95); box-shadow: 0 8px 18px rgba(17,24,39,0.04);
-    }
-    input:focus {
-      outline: none; border-color: rgba(168,85,247,0.75);
-      box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.18); transform: translateY(-1px);
-    }
-
-    button {
-      padding: 14px 18px; border: none; border-radius: 14px; cursor: pointer; font-size: 15px;
-      transition: 0.22s ease; font-family: 'Vazirmatn', sans-serif; font-weight: 700;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      box-shadow: 0 10px 22px rgba(17,24,39,0.07); user-select: none;
-    }
-    button#send-btn {
-      background: radial-gradient(300px 120px at 20% 20%, rgba(255,255,255,0.18), transparent 60%),
-                  linear-gradient(135deg, var(--p1) 0%, var(--p2) 85%);
-      color: #fff;
-    }
-    button#send-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(168, 85, 247, 0.25); }
-    button#clear-btn {
-      background: radial-gradient(260px 110px at 20% 20%, rgba(255,255,255,0.18), transparent 60%),
-                  linear-gradient(135deg, #fb923c 0%, #f97316 75%, #ea580c 120%);
-      color: #fff;
-    }
-    button#clear-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(249, 115, 22, 0.22); }
-    button:disabled{ opacity: 0.6; cursor: not-allowed; transform: none !important; }
-
-    .footer-info {
-      text-align: center; padding: 13px 16px; font-size: 13px; color: rgba(75,85,99,0.9);
-      background: linear-gradient(180deg, rgba(248,245,255,0.95) 0%, rgba(255,255,255,0.90) 100%);
-      border-top: 1px solid rgba(239,230,255,0.9);
-      display: flex; justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap; z-index: 1;
-    }
-    .footer-info i { color: rgba(168,85,247,0.95); }
-
-    .typing-indicator {
-      display: flex; padding: 14px 14px;
-      background: linear-gradient(135deg, rgba(243,232,255,0.95) 0%, rgba(240,249,255,0.88) 100%);
-      border: 1px solid rgba(233,213,255,0.9); border-radius: 18px; width: fit-content;
-      margin-right: auto; margin-left: 44px; align-items: center; gap: 10px; min-width: 160px;
-      box-shadow: 0 12px 22px rgba(88, 28, 135, 0.08);
-    }
-    .typing-text { color: #6d28d9; font-size: 14px; font-weight: 600; }
-    .typing-dots { display: flex; gap: 6px; }
-    .typing-dots span {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: linear-gradient(180deg, rgba(168,85,247,0.95), rgba(139,92,246,0.9));
-      animation: dots 1.4s infinite ease-in-out;
-    }
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes dots { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
-
+    :root { --bg:#f5f7fb; --card:#ffffff; --text:#1f2937; --muted:#6b7280; --brand:#4f46e5; --brand-2:#7c3aed; --line:#e5e7eb; --ok:#16a34a; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:'Vazirmatn',sans-serif; background:var(--bg); color:var(--text); direction:rtl; }
+    .chat-container { width:min(960px,94vw); min-height:88vh; margin:24px auto; background:var(--card); border:1px solid var(--line); border-radius:20px; display:flex; flex-direction:column; box-shadow:0 10px 28px rgba(0,0,0,.08); overflow:hidden; }
+    .chat-header { padding:18px 20px; background:linear-gradient(135deg,var(--brand),var(--brand-2)); color:#fff; display:flex; justify-content:space-between; align-items:center; gap:16px; }
+    .title-wrap h1 { margin:0; font-size:26px; line-height:1.3; }
+    .title-wrap p { margin:4px 0 0; font-size:14px; opacity:.95; }
+    .status { display:flex; flex-direction:column; align-items:flex-end; gap:6px; font-size:13px; }
+    .status-pill { background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:5px 10px; }
+    .status-live::before { content:""; width:8px; height:8px; border-radius:50%; background:#86efac; display:inline-block; margin-inline-start:8px; box-shadow:0 0 0 4px rgba(134,239,172,.25); }
+    .quick-actions { display:flex; flex-wrap:wrap; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line); background:#fafafa; }
+    .quick-btn { border:1px solid #d1d5db; background:#fff; color:#374151; font-size:14px; padding:8px 12px; border-radius:999px; cursor:pointer; }
+    .quick-btn:hover { border-color:#a5b4fc; }
+    .chat-box { flex:1; padding:18px; overflow-y:auto; background:#fcfcff; display:flex; flex-direction:column; gap:12px; }
+    .welcome-message { border:1px solid #e0e7ff; background:#eef2ff; border-radius:14px; padding:16px; font-size:16px; line-height:1.9; }
+    .message { max-width:78%; padding:13px 14px; border-radius:14px; line-height:1.9; font-size:16px; white-space:pre-wrap; }
+    .user-message { align-self:flex-start; background:#e0e7ff; border:1px solid #c7d2fe; }
+    .bot-message { align-self:flex-end; background:#fff; border:1px solid #e5e7eb; }
+    .message-time { margin-top:8px; font-size:12px; color:var(--muted); }
+    .typing-indicator { align-self:flex-end; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:10px 12px; display:flex; align-items:center; gap:10px; }
+    .typing-dots span { width:7px; height:7px; border-radius:50%; background:#6366f1; display:inline-block; animation:bounce 1.2s infinite ease-in-out; }
+    .typing-dots span:nth-child(2){ animation-delay:.15s; } .typing-dots span:nth-child(3){ animation-delay:.3s; }
+    @keyframes bounce { 0%,80%,100% { transform:translateY(0); opacity:.6; } 40% { transform:translateY(-5px); opacity:1; } }
+    .input-area { display:flex; gap:10px; padding:14px; border-top:1px solid var(--line); }
+    input { flex:1; border:1px solid #d1d5db; border-radius:12px; font-size:16px; padding:12px; font-family:inherit; }
+    button { border:none; border-radius:12px; font-family:inherit; font-size:15px; padding:12px 14px; cursor:pointer; }
+    #send-btn { background:#4f46e5; color:#fff; } #clear-btn { background:#ef4444; color:#fff; }
+    .footer-info { border-top:1px solid var(--line); padding:10px 14px; font-size:13px; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+    .dev-only { opacity:.75; }
+    body.screenshot-mode .dev-only { display:none !important; }
     @media (max-width: 768px) {
-      .chat-container { margin: 10px auto; border-radius: 18px; }
-      .chat-box { height: 450px; padding: 14px 10px 18px 12px; }
-      .message { max-width: 88%; }
-      .input-area { flex-direction: column; padding: 14px; }
-      button { width: 100%; }
+      .chat-container { margin:8px auto; min-height:95vh; }
+      .message { max-width:90%; }
+      .input-area { flex-direction:column; }
+      button { width:100%; }
     }
   </style>
 </head>
-
 <body>
-  <div class="header-decoration"></div>
-
   <div class="chat-container">
     <div class="chat-header">
-      <i class="fas fa-heart"></i>
-      <div>
-        گپ و گفت مادرانه
-        <div class="header-subtitle">پرسش و پاسخ تخصصی درباره شیردهی و مراقبت از نوزاد</div>
+      <div class="title-wrap">
+        <h1>دستیار تغذیه نوزاد</h1>
+        <p>پاسخ‌های مبتنی بر دانش برای شیردهی و تغذیه شیرخوار</p>
       </div>
-      <i class="fas fa-baby"></i>
+      <div class="status">
+        <div class="status-pill">Powered by AI</div>
+        <div class="status-pill status-live">جلسه فعال</div>
+      </div>
     </div>
 
-    <div class="quick-actions">
-      <button class="quick-btn" data-question="مشکلات شیردهی چیست؟"><i class="fas fa-question-circle"></i> مشکلات شیردهی</button>
-      <button class="quick-btn" data-question="فواید شیر مادر چیست؟"><i class="fas fa-heartbeat"></i> فواید شیر مادر</button>
-      <button class="quick-btn" data-question="راههای افزایش شیر مادر چیست؟"><i class="fas fa-plus-circle"></i> افزایش شیر</button>
-      <button class="quick-btn" data-question="تغذیه مادر شیرده"><i class="fas fa-apple-alt"></i> تغذیه مادر</button>
-      <button class="quick-btn" data-question="How can I tell if my baby is getting enough milk?"><i class="fas fa-language"></i> English</button>
+    <div class="quick-actions dev-only">
+      <button class="quick-btn" data-question="آیا شیر مادر برای نوزاد ۴ ماهه کافی است؟">نمونه ۱</button>
+      <button class="quick-btn" data-question="چطور میتوانم شیر بیشتری تولید کنم؟">نمونه ۲</button>
+      <button class="quick-btn" data-question="علائم کافی بودن شیر مادر چیست؟">نمونه ۳</button>
     </div>
 
     <div id="chat-box" class="chat-box">
-      <div class="welcome-message">
-        <div class="welcome-title">
-          <i class="fas fa-hands-helping"></i>
-          خوش آمدید مادر عزیز!
-          <i class="fas fa-hands-helping"></i>
-        </div>
-        <div class="welcome-text">
-          اینجا فضایی امن برای پرسش‌های شما درباره شیردهی و مراقبت از نوزاد است. می‌توانید سوالات خود را مطرح کنید یا از دکمه‌های سریع بالا استفاده نمایید.
-        </div>
-      </div>
+      <div class="welcome-message">سلام. این محیط برای پشتیبانی از مادران در زمینه شیردهی طراحی شده است. لطفاً پرسش خود را به‌صورت دقیق بنویسید تا پاسخ متناسب دریافت کنید.</div>
     </div>
 
     <div class="input-area">
-      <input id="user-input" type="text" placeholder="سوال خود درباره شیردهی، تغذیه نوزاد یا مراقبت‌های پس از زایمان را اینجا بنویسید..." />
-      <button id="send-btn"><i class="fas fa-paper-plane"></i> ارسال</button>
-      <button id="clear-btn"><i class="fas fa-trash-alt"></i> پاک‌کردن</button>
+      <input id="user-input" type="text" placeholder="سوال خود را درباره شیردهی یا تغذیه نوزاد بنویسید..." />
+      <button id="send-btn">ارسال</button>
+      <button id="clear-btn">پاک‌کردن</button>
     </div>
 
     <div class="footer-info">
-      <div><i class="fas fa-shield-alt"></i> اطلاعات شما محرمانه می‌ماند</div>
-      <div><i class="fas fa-users"></i> پاسخ‌ها توسط مشاوران شیردهی بررسی می‌شوند</div>
-      <div><i class="fas fa-clock"></i> پاسخگویی ۲۴ ساعته</div>
+      <div>🔒 حفظ محرمانگی گفتگو</div>
+      <div>🟢 اتصال به وب‌هوک فعال</div>
+      <div class="dev-only">حالت پژوهشی برای اسکرین‌شات</div>
     </div>
   </div>
 
-  <script>
-    console.log("🚀 NEW VERSION LOADED - Using ReadableStream");
-    
-    const N8N_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
-    const chatBox = document.getElementById("chat-box");
-    const sendBtn = document.getElementById("send-btn");
-    const clearBtn = document.getElementById("clear-btn");
-    const input = document.getElementById("user-input");
+<script>
+  const N8N_URL = "https://n8n.eveai.cloud/webhook/1b006acc-f062-4f5f-ab6b-99185f903b75";
+  const DEMO_MODE = new URLSearchParams(location.search).get("demo") === "true";
+  const SCREENSHOT_MODE = new URLSearchParams(location.search).get("screenshot") === "true";
+  if (SCREENSHOT_MODE) document.body.classList.add("screenshot-mode");
 
-    function scroll() { chatBox.scrollTop = chatBox.scrollHeight; }
-    function time() {
-      const t = new Date();
-      return `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+  const chatBox = document.getElementById("chat-box");
+  const sendBtn = document.getElementById("send-btn");
+  const clearBtn = document.getElementById("clear-btn");
+  const input = document.getElementById("user-input");
+
+  function time() {
+    const t = new Date();
+    return `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+  }
+
+  function getSessionId() {
+    let id = localStorage.getItem("eveai_sessionId");
+    if (!id) {
+      id = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      localStorage.setItem("eveai_sessionId", id);
     }
-    function detectDir(text) {
-      for (const ch of text || "") {
-        if (/\s/.test(ch)) continue;
-        if (/[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/.test(ch)) return "rtl";
-        if (/[A-Za-z]/.test(ch)) return "ltr";
-      }
-      return "rtl";
+    return id;
+  }
+
+  function addMessage(text, role) {
+    const div = document.createElement("div");
+    div.className = `message ${role === 'user' ? 'user-message' : 'bot-message'}`;
+    div.textContent = text;
+    const ts = document.createElement("div");
+    ts.className = "message-time";
+    ts.textContent = time();
+    div.appendChild(ts);
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function addTyping() {
+    const el = document.createElement("div");
+    el.className = "typing-indicator";
+    el.innerHTML = '<span>در حال دریافت پاسخ</span><span class="typing-dots"><span></span><span></span><span></span></span>';
+    chatBox.appendChild(el);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return el;
+  }
+
+  function seedDemoConversation() {
+    addMessage("آیا شیر مادر برای نوزاد ۴ ماهه کافی است؟", "user");
+    addMessage("بله، در بیشتر موارد تا پایان ۶ ماهگی، شیر مادر به‌تنهایی کافی است؛ به شرطی که افزایش وزن، تعداد پوشک خیس و رشد نوزاد مناسب باشد.\n\nبرای اطمینان: پایش وزن ماهانه، ارزیابی دفعات شیردهی، و توجه به علائم سیری نوزاد مهم است. اگر نگران رشد هستید، ارزیابی حضوری توسط پزشک یا مشاور شیردهی توصیه می‌شود.\n\nمنابع / References:\n- راهنمای تغذیه انحصاری با شیر مادر در ۶ ماه اول\n- Breastfeeding Counselling Recommendations", "assistant");
+    addMessage("چطور میتوانم شیر بیشتری تولید کنم؟", "user");
+    addMessage("برای افزایش تولید شیر این اقدامات معمولاً مؤثرند:\n• شیردهی مکرر (۸ تا ۱۲ بار در شبانه‌روز)\n• تخلیه کامل‌تر پستان در هر نوبت\n• تماس پوست‌به‌پوست و تغذیه شبانه\n• مصرف مایعات کافی و استراحت نسبی\n\nاگر درد شدید، تب، یا کاهش وزن نوزاد دارید، ویزیت فوری لازم است.\n\nمنابع / References:\n- مدیریت بالینی کاهش شیر مادر\n- اصول مشاوره شیردهی مادر و نوزاد", "assistant");
+  }
+
+  let isSending = false;
+  async function send() {
+    if (isSending) return;
+    const msg = input.value.trim();
+    if (!msg) return;
+    addMessage(msg, "user");
+    input.value = "";
+    const typing = addTyping();
+
+    isSending = true;
+    sendBtn.disabled = true;
+    input.disabled = true;
+
+    try {
+      const res = await fetch(N8N_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ msg, sessionId: getSessionId() })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      typing.remove();
+      addMessage(data?.answer || "پاسخی دریافت نشد.", "assistant");
+    } catch (err) {
+      typing.remove();
+      addMessage("ارتباط با سرویس پاسخ‌گویی برقرار نشد. لطفاً دوباره تلاش کنید.", "assistant");
+      console.error(err);
+    } finally {
+      isSending = false;
+      sendBtn.disabled = false;
+      input.disabled = false;
+      input.focus();
     }
-    function getSessionId() {
-      let id = localStorage.getItem("eveai_sessionId");
-      if (!id) {
-        id = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-        localStorage.setItem("eveai_sessionId", id);
-      }
-      return id;
-    }
+  }
 
-    function addUserMsg(text) {
-      const div = document.createElement("div");
-      div.className = "message user-message msg-rtl";
-      div.innerHTML = `<div class="message-text">${text}</div><div class="message-time">${time()}</div>`;
-      chatBox.appendChild(div);
-      scroll();
-    }
+  clearBtn.onclick = () => {
+    chatBox.innerHTML = "";
+    localStorage.removeItem("eveai_sessionId");
+    addMessage("گفتگو پاک شد. می‌توانید از ابتدا سوال بپرسید.", "assistant");
+  };
+  sendBtn.onclick = send;
+  input.onkeydown = (e) => { if (e.key === "Enter") send(); };
+  document.querySelectorAll(".quick-btn").forEach(btn => btn.onclick = () => { input.value = btn.dataset.question; send(); });
 
-    function createBotMsg() {
-      const div = document.createElement("div");
-      div.className = "message bot-message";
-      
-      const msgText = document.createElement("div");
-      msgText.className = "message-text";
-      msgText.style.whiteSpace = "pre-wrap";
-      
-      const caret = document.createElement("span");
-      caret.className = "typing-caret";
-      caret.textContent = "▍";
-      msgText.appendChild(caret);
-      
-      div.appendChild(msgText);
-      
-      const timeDiv = document.createElement("div");
-      timeDiv.className = "message-time";
-      div.appendChild(timeDiv);
-      
-      chatBox.appendChild(div);
-      scroll();
-      
-      return {
-        div,
-        msgText,
-        caret,
-        timeDiv,
-        append(text) {
-          const node = document.createTextNode(text);
-          this.msgText.insertBefore(node, this.caret);
-          scroll();
-        },
-        done(ms) {
-          this.caret.remove();
-          this.div.classList.add(detectDir(this.msgText.textContent) === "ltr" ? "msg-ltr" : "msg-rtl");
-          const pill = ms < 8000 ? `<span class="pill ok">⏱ ${ms}ms</span>` : `<span class="pill warn">⏱ ${Math.round(ms/1000)}s</span>`;
-          this.timeDiv.innerHTML = `${pill} <span class="pill">${time()}</span>`;
-        }
-      };
-    }
-
-    function createTyping() {
-      const div = document.createElement("div");
-      div.className = "typing-indicator";
-      div.innerHTML = `<div class="typing-text">در حال دریافت پاسخ...</div><div class="typing-dots"><span></span><span></span><span></span></div>`;
-      return div;
-    }
-
-    let isSending = false;
-
-    async function send() {
-      if (isSending) return;
-      const msg = input.value.trim();
-      if (!msg) return;
-
-      console.log("📤 Sending:", msg);
-      addUserMsg(msg);
-      input.value = "";
-
-      const typing = createTyping();
-      chatBox.appendChild(typing);
-      scroll();
-
-      isSending = true;
-      sendBtn.disabled = true;
-      input.disabled = true;
-
-      const start = performance.now();
-
-      try {
-        const res = await fetch(N8N_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ msg, sessionId: getSessionId() })
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        if (!res.body) throw new Error("No response body");
-
-        typing.remove();
-        const botMsg = createBotMsg();
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-      // ---------- STREAMING HANDLER - MANUAL JSON EXTRACTION ----------
-      async function streamFromN8n(msg, sessionId, onChunk, onError) {
-        const started = performance.now();
-
-        try {
-          const response = await fetch(N8N_WEBHOOK_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "text/event-stream, application/x-ndjson, application/json",
-              // Avoid Brotli-compressed responses that some proxies send by default,
-              // which can delay chunk delivery and break streaming parsing.
-              "Accept-Encoding": "identity"
-            },
-            body: JSON.stringify({ msg, sessionId })
-          });
-
-          if (!response.ok || !response.body) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const decoder = new TextDecoder("utf-8");
-          const reader = response.body.getReader();
-          let buffer = "";
-          let pendingJson = "";
-          let sseDataLines = [];
-
-          const tryParse = (candidate) => {
-            const trimmed = (candidate || "").trim();
-            if (!trimmed) return false;
-
-            try {
-              const parsed = JSON.parse(trimmed);
-              console.log("✅ Parsed:", parsed.type, parsed.content?.substring?.(0, 30));
-
-              if (parsed.type === "item" && parsed.content) {
-                onChunk(parsed.content);
-              } else if (parsed.type === "end") {
-                console.log("🏁 Stream ended");
-              }
-
-              return true;
-            } catch (err) {
-              return false;
-            }
-          };
-
-          const flushSseEvent = () => {
-            if (!sseDataLines.length) return;
-            const candidate = sseDataLines.join("\n");
-            sseDataLines = [];
-
-            if (tryParse(pendingJson + candidate)) {
-              pendingJson = "";
-            } else {
-              pendingJson += candidate;
-            }
-          };
-
-          const processBuffer = () => {
-            const lines = buffer.split(/\r?\n/);
-            buffer = lines.pop() || ""; // keep last partial line
-
-            for (const rawLine of lines) {
-              // SSE events arrive as lines prefixed with "data:" and separated by blank lines
-              if (rawLine.startsWith("data:")) {
-                sseDataLines.push(rawLine.slice(5).trimStart());
-                continue;
-              }
-
-              // Ignore other SSE control lines
-              if (rawLine.startsWith(":") || rawLine.startsWith("event:")) continue;
-
-              // Empty line means the end of an SSE event; flush what we collected
-              if (rawLine.trim() === "") {
-                flushSseEvent();
-
-                // If we were buffering NDJSON without SSE, try to parse it now
-                if (pendingJson.trim()) {
-                  tryParse(pendingJson);
-                  pendingJson = "";
-                }
-                continue;
-              }
-
-              // NDJSON fallback: accumulate partial JSON fragments
-              if (sseDataLines.length) {
-                sseDataLines.push(rawLine);
-                continue;
-              }
-
-              const candidate = pendingJson + rawLine;
-              if (tryParse(candidate)) {
-                pendingJson = "";
-              } else {
-                pendingJson = candidate;
-              }
-        while (true) {
-          const {done, value} = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, {stream: true});
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            let clean = line.trim();
-            if (clean.startsWith('data:')) clean = clean.substring(5).trim();
-            if (!clean || !clean.startsWith('{')) continue;
-
-            try {
-              const obj = JSON.parse(clean);
-              console.log("✅", obj.type, obj.content?.substring(0, 30));
-              
-              if (obj.type === "item" && obj.content) {
-                botMsg.append(obj.content);
-              } else if (obj.type === "end") {
-                break;
-              }
-            } catch (e) {
-              console.warn("⚠️ Parse error:", clean.substring(0, 100));
-            }
-          };
-
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            processBuffer();
-          }
-
-          // Flush remaining buffer
-          buffer += decoder.decode();
-          processBuffer();
-
-          // Attempt to parse any leftover SSE event or pending JSON
-          flushSseEvent();
-          if (pendingJson) {
-            tryParse(pendingJson);
-          }
-        }
-
-        const ms = Math.round(performance.now() - start);
-        botMsg.done(ms);
-        console.log(`⏱️ ${ms}ms`);
-
-      } catch (err) {
-        console.error("🚨", err);
-        typing.remove();
-        const errMsg = createBotMsg();
-        errMsg.append("مشکلی پیش آمد. لطفاً دوباره تلاش کنید.");
-        errMsg.done(0);
-        errMsg.timeDiv.innerHTML = '<span class="pill warn">Error</span>';
-      } finally {
-        isSending = false;
-        sendBtn.disabled = false;
-        input.disabled = false;
-      }
-    }
-
-    clearBtn.onclick = () => {
-      if (!confirm("آیا از پاک کردن گفتگو مطمئن هستید؟")) return;
-      chatBox.querySelectorAll(".message").forEach(m => m.remove());
-      localStorage.removeItem("eveai_sessionId");
-      const msg = createBotMsg();
-      msg.append("گفتگو پاک شد. می‌توانید دوباره سوال بپرسید.");
-      msg.done(0);
-      msg.timeDiv.innerHTML = '<span class="pill ok">Cleared</span>';
-    };
-
-    sendBtn.onclick = send;
-    input.onkeydown = (e) => { if (e.key === "Enter") send(); };
-
-    document.querySelectorAll(".quick-btn").forEach(btn => {
-      btn.onclick = () => {
-        input.value = btn.getAttribute("data-question");
-        send();
-      };
-    });
-  </script>
+  if (DEMO_MODE) seedDemoConversation();
+</script>
 </body>
-</html></parameter>
+</html>
