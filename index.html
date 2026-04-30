@@ -3,58 +3,93 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>دستیار تغذیه نوزاد</title>
+  <title>دستیار تغذیه نوزاد — سیستم هوشمند مشاوره شیردهی</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&family=Lalezar&display=swap" rel="stylesheet">
   <style>
     :root { --bg:#f5f7fb; --card:#ffffff; --text:#1f2937; --muted:#6b7280; --brand:#4f46e5; --brand-2:#7c3aed; --line:#e5e7eb; --ok:#16a34a; }
     * { box-sizing:border-box; }
     body { margin:0; font-family:'Vazirmatn',sans-serif; background:var(--bg); color:var(--text); direction:rtl; }
     .chat-container { width:min(960px,94vw); min-height:88vh; margin:24px auto; background:var(--card); border:1px solid var(--line); border-radius:20px; display:flex; flex-direction:column; box-shadow:0 10px 28px rgba(0,0,0,.08); overflow:hidden; }
+
+    /* ── Header ── */
     .chat-header { padding:18px 20px; background:linear-gradient(135deg,var(--brand),var(--brand-2)); color:#fff; display:flex; justify-content:space-between; align-items:center; gap:16px; }
-    .title-wrap h1 { margin:0; font-size:26px; line-height:1.3; }
-    .title-wrap p { margin:4px 0 0; font-size:14px; opacity:.95; }
-    .status { display:flex; flex-direction:column; align-items:flex-end; gap:6px; font-size:13px; }
-    .status-pill { background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:5px 10px; }
-    .status-live::before { content:""; width:8px; height:8px; border-radius:50%; background:#86efac; display:inline-block; margin-inline-start:8px; box-shadow:0 0 0 4px rgba(134,239,172,.25); }
+    .header-title-group { display:flex; align-items:center; gap:14px; }
+    .header-title-group > i { font-size:28px; opacity:.9; flex-shrink:0; }
+    .header-title-text h1 { margin:0; font-size:24px; font-family:'Lalezar',sans-serif; line-height:1.3; }
+    .header-subtitle { margin:3px 0 0; font-size:13px; opacity:.9; font-weight:400; }
+    .header-ai-badge { font-size:11px; font-family:'Vazirmatn',sans-serif; font-weight:400; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); border-radius:999px; padding:3px 10px; margin-top:6px; display:inline-block; letter-spacing:.5px; }
+    .header-status { font-size:12px; font-family:'Vazirmatn',sans-serif; display:flex; align-items:center; gap:6px; opacity:.92; background:rgba(255,255,255,.12); border-radius:999px; padding:5px 12px; white-space:nowrap; flex-shrink:0; }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:#4ade80; box-shadow:0 0 6px rgba(74,222,128,.8); animation:pulse 2s infinite; flex-shrink:0; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    /* ── Quick actions ── */
     .quick-actions { display:flex; flex-wrap:wrap; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line); background:#fafafa; }
-    .quick-btn { border:1px solid #d1d5db; background:#fff; color:#374151; font-size:14px; padding:8px 12px; border-radius:999px; cursor:pointer; }
-    .quick-btn:hover { border-color:#a5b4fc; }
+    .quick-btn { border:1px solid #d1d5db; background:#fff; color:#374151; font-size:14px; padding:8px 12px; border-radius:999px; cursor:pointer; font-family:inherit; transition:border-color .15s,background .15s; }
+    .quick-btn:hover { border-color:#a5b4fc; background:#eef2ff; }
+
+    /* ── Chat box ── */
     .chat-box { flex:1; padding:18px; overflow-y:auto; background:#fcfcff; display:flex; flex-direction:column; gap:12px; }
     .welcome-message { border:1px solid #e0e7ff; background:#eef2ff; border-radius:14px; padding:16px; font-size:16px; line-height:1.9; }
-    .message { max-width:78%; padding:13px 14px; border-radius:14px; line-height:1.9; font-size:16px; white-space:pre-wrap; }
-    .user-message { align-self:flex-start; background:#e0e7ff; border:1px solid #c7d2fe; }
+    .message { max-width:78%; padding:13px 14px; border-radius:14px; line-height:1.9; font-size:15px; }
+    .user-message { align-self:flex-start; background:#e0e7ff; border:1px solid #c7d2fe; white-space:pre-wrap; }
     .bot-message { align-self:flex-end; background:#fff; border:1px solid #e5e7eb; }
-    .message-time { margin-top:8px; font-size:12px; color:var(--muted); }
-    .typing-indicator { align-self:flex-end; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:10px 12px; display:flex; align-items:center; gap:10px; }
+    .bot-message ul { margin:6px 0 6px 0; padding-inline-start:20px; }
+    .bot-message li { margin:3px 0; }
+    .bot-message h4 { margin:8px 0 4px; font-size:15px; color:#5b21b6; }
+    .message-time { margin-top:8px; font-size:11px; color:var(--muted); }
+
+    /* ── Typing indicator ── */
+    .typing-indicator { align-self:flex-end; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:10px 12px; display:flex; align-items:center; gap:10px; font-size:14px; color:var(--muted); }
     .typing-dots span { width:7px; height:7px; border-radius:50%; background:#6366f1; display:inline-block; animation:bounce 1.2s infinite ease-in-out; }
     .typing-dots span:nth-child(2){ animation-delay:.15s; } .typing-dots span:nth-child(3){ animation-delay:.3s; }
     @keyframes bounce { 0%,80%,100% { transform:translateY(0); opacity:.6; } 40% { transform:translateY(-5px); opacity:1; } }
+
+    /* ── Input area ── */
     .input-area { display:flex; gap:10px; padding:14px; border-top:1px solid var(--line); }
-    input { flex:1; border:1px solid #d1d5db; border-radius:12px; font-size:16px; padding:12px; font-family:inherit; }
-    button { border:none; border-radius:12px; font-family:inherit; font-size:15px; padding:12px 14px; cursor:pointer; }
+    input { flex:1; border:1px solid #d1d5db; border-radius:12px; font-size:16px; padding:12px; font-family:inherit; outline:none; transition:border-color .2s; }
+    input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+    button { border:none; border-radius:12px; font-family:inherit; font-size:15px; padding:12px 14px; cursor:pointer; transition:opacity .2s; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
     #send-btn { background:#4f46e5; color:#fff; } #clear-btn { background:#ef4444; color:#fff; }
+
+    /* ── Footer ── */
     .footer-info { border-top:1px solid var(--line); padding:10px 14px; font-size:13px; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
     .dev-only { opacity:.75; }
     body.screenshot-mode .dev-only { display:none !important; }
+
+    /* ── Print / screenshot ── */
+    @media print {
+      body { background:white !important; }
+      .quick-actions, .input-area, .footer-info { display:none !important; }
+      .chat-container { box-shadow:none !important; max-width:100% !important; margin:0 !important; min-height:auto !important; }
+      .chat-box { height:auto !important; overflow:visible !important; }
+    }
+    .no-print { display:none !important; }
+
+    /* ── Responsive ── */
     @media (max-width: 768px) {
       .chat-container { margin:8px auto; min-height:95vh; }
       .message { max-width:90%; }
       .input-area { flex-direction:column; }
       button { width:100%; }
+      .header-subtitle { display:none; }
     }
   </style>
 </head>
 <body>
   <div class="chat-container">
     <div class="chat-header">
-      <div class="title-wrap">
-        <h1>دستیار تغذیه نوزاد</h1>
-        <p>پاسخ‌های مبتنی بر دانش برای شیردهی و تغذیه شیرخوار</p>
+      <div class="header-title-group">
+        <i class="fas fa-baby"></i>
+        <div class="header-title-text">
+          <h1>دستیار تغذیه نوزاد</h1>
+          <div class="header-subtitle">راهنمای هوشمند شیردهی و تغذیه نوزاد مبتنی بر شواهد علمی</div>
+          <div class="header-ai-badge">⚡ Powered by AI</div>
+        </div>
       </div>
-      <div class="status">
-        <div class="status-pill">Powered by AI</div>
-        <div class="status-pill status-live">جلسه فعال</div>
+      <div class="header-status">
+        <span class="status-dot"></span> آنلاین
       </div>
     </div>
 
@@ -106,10 +141,39 @@
     return id;
   }
 
+  function renderMarkdown(text) {
+    const lines = text.split('\n');
+    const out = [];
+    let inList = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const bold = s => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      if (trimmed.startsWith('- ')) {
+        if (!inList) { out.push('<ul>'); inList = true; }
+        out.push(`<li>${bold(trimmed.slice(2))}</li>`);
+      } else {
+        if (inList) { out.push('</ul>'); inList = false; }
+        if (trimmed.startsWith('### ')) {
+          out.push(`<h4>${bold(trimmed.slice(4))}</h4>`);
+        } else if (trimmed === '') {
+          out.push('<br>');
+        } else {
+          out.push(`<span>${bold(trimmed)}</span><br>`);
+        }
+      }
+    }
+    if (inList) out.push('</ul>');
+    return out.join('');
+  }
+
   function addMessage(text, role) {
     const div = document.createElement("div");
     div.className = `message ${role === 'user' ? 'user-message' : 'bot-message'}`;
-    div.textContent = text;
+    if (role === 'assistant') {
+      div.innerHTML = renderMarkdown(text);
+    } else {
+      div.textContent = text;
+    }
     const ts = document.createElement("div");
     ts.className = "message-time";
     ts.textContent = time();
@@ -129,9 +193,43 @@
 
   function seedDemoConversation() {
     addMessage("آیا شیر مادر برای نوزاد ۴ ماهه کافی است؟", "user");
-    addMessage("بله، در بیشتر موارد تا پایان ۶ ماهگی، شیر مادر به‌تنهایی کافی است؛ به شرطی که افزایش وزن، تعداد پوشک خیس و رشد نوزاد مناسب باشد.\n\nبرای اطمینان: پایش وزن ماهانه، ارزیابی دفعات شیردهی، و توجه به علائم سیری نوزاد مهم است. اگر نگران رشد هستید، ارزیابی حضوری توسط پزشک یا مشاور شیردهی توصیه می‌شود.\n\nمنابع / References:\n- راهنمای تغذیه انحصاری با شیر مادر در ۶ ماه اول\n- Breastfeeding Counselling Recommendations", "assistant");
+    addMessage(
+      "بله، در بیشتر موارد تا پایان ۶ ماهگی، **شیر مادر به‌تنهایی کافی است**؛ به شرطی که افزایش وزن، تعداد پوشک خیس و رشد نوزاد مناسب باشد.\n" +
+      "\n" +
+      "### نکات کلیدی ارزیابی\n" +
+      "- پایش وزن ماهانه و مقایسه با منحنی‌های رشد WHO\n" +
+      "- تعداد پوشک خیس: حداقل ۶ پوشک در شبانه‌روز\n" +
+      "- دفعات شیردهی: ۸ تا ۱۲ بار در ۲۴ ساعت\n" +
+      "- علائم سیری پس از شیردهی و خواب منظم\n" +
+      "\n" +
+      "در صورت نگرانی درباره رشد، ارزیابی حضوری توسط پزشک یا **مشاور رسمی شیردهی (IBCLC)** توصیه می‌شود.\n" +
+      "\n" +
+      "### منابع / References\n" +
+      "- WHO/UNICEF (2022). *Breastfeeding and Infant Feeding Guidelines*\n" +
+      "- AAP Policy Statement on Breastfeeding, 2022",
+      "assistant"
+    );
     addMessage("چطور میتوانم شیر بیشتری تولید کنم؟", "user");
-    addMessage("برای افزایش تولید شیر این اقدامات معمولاً مؤثرند:\n• شیردهی مکرر (۸ تا ۱۲ بار در شبانه‌روز)\n• تخلیه کامل‌تر پستان در هر نوبت\n• تماس پوست‌به‌پوست و تغذیه شبانه\n• مصرف مایعات کافی و استراحت نسبی\n\nاگر درد شدید، تب، یا کاهش وزن نوزاد دارید، ویزیت فوری لازم است.\n\nمنابع / References:\n- مدیریت بالینی کاهش شیر مادر\n- اصول مشاوره شیردهی مادر و نوزاد", "assistant");
+    addMessage(
+      "تولید شیر مادر بر اساس اصل **«عرضه و تقاضا»** تنظیم می‌شود. مؤثرترین راهکارها:\n" +
+      "\n" +
+      "### روش‌های افزایش تولید\n" +
+      "- **شیردهی مکرر**: ۸ تا ۱۲ بار در شبانه‌روز، از جمله شبانه\n" +
+      "- **تخلیه کامل پستان** در هر نوبت (پمپ کردن پس از شیردهی در صورت نیاز)\n" +
+      "- تماس **پوست‌به‌پوست** با نوزاد برای تحریک هورمون اکسی‌توسین\n" +
+      "- مصرف حداقل **۲ تا ۲.۵ لیتر آب** در روز\n" +
+      "- **استراحت کافی** و کاهش استرس\n" +
+      "\n" +
+      "### علائم نیازمند ارزیابی فوری\n" +
+      "- کاهش وزن نوزاد بیش از ۱۰٪ از وزن تولد\n" +
+      "- تب، درد شدید یا سفتی پستان\n" +
+      "- کمتر از ۶ پوشک خیس در روز\n" +
+      "\n" +
+      "### منابع / References\n" +
+      "- Academy of Breastfeeding Medicine Protocol #9: Use of Galactogogues\n" +
+      "- راهنمای بالینی مدیریت کم‌شیری، وزارت بهداشت ۱۴۰۲",
+      "assistant"
+    );
   }
 
   let isSending = false;
