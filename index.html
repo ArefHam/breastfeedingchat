@@ -295,20 +295,20 @@
     </div>
 
     <div class="quick-actions dev-only">
-      <button class="quick-btn" data-q-key="q1" data-i18n="q1Label">نمونه ۱</button>
-      <button class="quick-btn" data-q-key="q2" data-i18n="q2Label">نمونه ۲</button>
-      <button class="quick-btn" data-q-key="q3" data-i18n="q3Label">نمونه ۳</button>
+      <button class="quick-btn" data-q-key="q1" data-i18n="q1Label">کفایت شیر مادر در ۴ ماهگی</button>
+      <button class="quick-btn" data-q-key="q2" data-i18n="q2Label">افزایش تولید شیر</button>
+      <button class="quick-btn" data-q-key="q3" data-i18n="q3Label">علائم کافی بودن شیر</button>
     </div>
 
     <div id="chat-box" class="chat-box">
       <div class="welcome-message">
         <i class="fas fa-heart"></i>
-        <span data-i18n="welcome">سلام. این محیط برای پشتیبانی از مادران در زمینه شیردهی طراحی شده است. لطفاً پرسش خود را به‌صورت دقیق بنویسید تا پاسخ متناسب دریافت کنید.</span>
+        <span dir="auto" data-i18n="welcome">سلام. این محیط برای پشتیبانی از مادران در زمینه شیردهی طراحی شده است. لطفاً پرسش خود را به‌صورت دقیق بنویسید تا پاسخ متناسب دریافت کنید.</span>
       </div>
     </div>
 
     <div class="input-area">
-      <input id="user-input" type="text" data-i18n-placeholder="placeholder" placeholder="سوال خود را درباره شیردهی یا تغذیه نوزاد بنویسید..." />
+      <input id="user-input" type="text" dir="auto" data-i18n-placeholder="placeholder" placeholder="سوال خود را درباره شیردهی یا تغذیه نوزاد بنویسید..." />
       <button id="send-btn" data-i18n="send">ارسال</button>
       <button id="clear-btn" data-i18n="clear">پاک‌کردن</button>
     </div>
@@ -316,7 +316,6 @@
     <div class="footer-info">
       <div data-i18n="privacy">🔒 حفظ محرمانگی گفتگو</div>
       <div data-i18n="connected">🟢 اتصال به وب‌هوک فعال</div>
-      <div class="dev-only" data-i18n="researchMode">حالت پژوهشی برای اسکرین‌شات</div>
     </div>
   </div>
 
@@ -333,9 +332,9 @@
       subtitle: "راهنمای هوشمند شیردهی و تغذیه نوزاد مبتنی بر شواهد علمی",
       aiBadge: "⚡ مبتنی بر هوش مصنوعی",
       online: "آنلاین",
-      q1Label: "نمونه ۱",
-      q2Label: "نمونه ۲",
-      q3Label: "نمونه ۳",
+      q1Label: "کفایت شیر مادر در ۴ ماهگی",
+      q2Label: "افزایش تولید شیر",
+      q3Label: "علائم کافی بودن شیر",
       q1: "آیا شیر مادر برای نوزاد ۴ ماهه کافی است؟",
       q2: "چطور می‌توانم شیر بیشتری تولید کنم؟",
       q3: "علائم کافی بودن شیر مادر چیست؟",
@@ -345,7 +344,6 @@
       clear: "پاک‌کردن",
       privacy: "🔒 حفظ محرمانگی گفتگو",
       connected: "🟢 اتصال به وب‌هوک فعال",
-      researchMode: "حالت پژوهشی برای اسکرین‌شات",
       typing: "در حال دریافت پاسخ",
       noAnswer: "پاسخی دریافت نشد.",
       networkError: "ارتباط با سرویس پاسخ‌گویی برقرار نشد. لطفاً دوباره تلاش کنید.",
@@ -357,9 +355,9 @@
       subtitle: "Evidence-based smart guide for breastfeeding & infant nutrition",
       aiBadge: "⚡ Powered by AI",
       online: "Online",
-      q1Label: "Example 1",
-      q2Label: "Example 2",
-      q3Label: "Example 3",
+      q1Label: "Is breast milk enough at 4 months?",
+      q2Label: "Increasing milk supply",
+      q3Label: "Signs of sufficient milk",
       q1: "Is breast milk alone enough for a 4-month-old baby?",
       q2: "How can I increase my milk supply?",
       q3: "What are the signs that my baby is getting enough milk?",
@@ -369,7 +367,6 @@
       clear: "Clear",
       privacy: "🔒 Conversation is private",
       connected: "🟢 Connected",
-      researchMode: "Research mode (for screenshots)",
       typing: "Generating response",
       noAnswer: "No response received.",
       networkError: "Could not reach the assistant service. Please try again.",
@@ -454,6 +451,7 @@
   function addMessage(text, role) {
     const div = document.createElement("div");
     div.className = `message ${role === 'user' ? 'user-message' : 'bot-message'}`;
+    div.setAttribute("dir", "auto");
     if (role === 'assistant') {
       div.innerHTML = renderMarkdown(text);
     } else {
