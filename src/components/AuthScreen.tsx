@@ -10,6 +10,16 @@ interface AuthScreenProps {
   onToggleLanguage: () => void
 }
 
+function authFailureMessage(language: Language, error: unknown): string {
+  const status = typeof error === 'object' && error !== null && 'status' in error
+    ? Number(error.status)
+    : undefined
+
+  return status === 401 || status === 403
+    ? t(language, 'authConfigurationError')
+    : t(language, 'authError')
+}
+
 export function AuthScreen({ language, onToggleLanguage }: AuthScreenProps) {
   const [mode, setMode] = useState<'signin' | 'register'>('signin')
   const [email, setEmail] = useState('')
@@ -22,12 +32,22 @@ export function AuthScreen({ language, onToggleLanguage }: AuthScreenProps) {
     event.preventDefault()
     setMessage(null)
 
-    if (!emailSchema.safeParse(email).success || !passwordSchema.safeParse(password).success) {
-      setMessage(t(language, 'authError'))
+    if (!emailSchema.safeParse(email).success) {
+      setMessage(t(language, 'invalidEmail'))
       return
     }
-    if (mode === 'register' && password !== confirmation) {
-      setMessage(t(language, 'passwordMismatch'))
+
+    if (mode === 'register') {
+      if (!passwordSchema.safeParse(password).success) {
+        setMessage(t(language, 'invalidRegistrationPassword'))
+        return
+      }
+      if (password !== confirmation) {
+        setMessage(t(language, 'passwordMismatch'))
+        return
+      }
+    } else if (!password) {
+      setMessage(t(language, 'passwordRequired'))
       return
     }
 
@@ -41,8 +61,8 @@ export function AuthScreen({ language, onToggleLanguage }: AuthScreenProps) {
         if (error) throw error
         if (!data.session) setMessage(t(language, 'accountCreatedCheckEmail'))
       }
-    } catch {
-      setMessage(t(language, 'authError'))
+    } catch (error) {
+      setMessage(authFailureMessage(language, error))
     } finally {
       setSubmitting(false)
     }
@@ -97,17 +117,17 @@ export function AuthScreen({ language, onToggleLanguage }: AuthScreenProps) {
           <label>
             <span>{t(language, 'password')}</span>
             <input
-              aria-describedby="password-hint"
+              aria-describedby={mode === 'register' ? 'password-hint' : undefined}
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
               dir="ltr"
-              minLength={10}
+              minLength={mode === 'register' ? 10 : undefined}
               onChange={(event) => setPassword(event.target.value)}
               required
               type="password"
               value={password}
             />
           </label>
-          <small id="password-hint">{t(language, 'passwordHint')}</small>
+          {mode === 'register' && <small id="password-hint">{t(language, 'passwordHint')}</small>}
           {mode === 'register' && (
             <label>
               <span>{t(language, 'confirmPassword')}</span>
@@ -126,7 +146,9 @@ export function AuthScreen({ language, onToggleLanguage }: AuthScreenProps) {
           {message && <p className="form-message" role="alert">{message}</p>}
 
           <button className="primary-button auth-submit" disabled={submitting} type="submit">
-            {mode === 'signin' ? t(language, 'signInAction') : t(language, 'registerAction')}
+            {submitting
+              ? t(language, 'authSubmitting')
+              : mode === 'signin' ? t(language, 'signInAction') : t(language, 'registerAction')}
           </button>
         </form>
 

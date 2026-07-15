@@ -44,6 +44,11 @@ const translations = {
     accountCreatedCheckEmail: 'حساب ساخته شد. اگر تأیید ایمیل فعال است، ایمیل خود را بررسی کنید.',
     rateLimited: 'پیام‌ها خیلی سریع ارسال شدند. یک دقیقه صبر کنید و دوباره تلاش کنید.',
     emptyTitle: 'گفتگوی جدید',
+    invalidEmail: 'لطفاً یک ایمیل معتبر وارد کنید.',
+    invalidRegistrationPassword: 'رمز عبور باید حداقل ۱۰ نویسه و شامل حرف و عدد باشد.',
+    passwordRequired: 'لطفاً رمز عبور خود را وارد کنید.',
+    authConfigurationError: 'اتصال ایمن به سرویس حساب برقرار نشد. لطفاً بعداً دوباره تلاش کنید.',
+    authSubmitting: 'لطفاً صبر کنید…',
     language: 'English',
   },
   en: {
@@ -89,6 +94,11 @@ const translations = {
     accountCreatedCheckEmail: 'Account created. Check your inbox if email confirmation is enabled.',
     rateLimited: 'Messages were sent too quickly. Wait a minute and try again.',
     emptyTitle: 'New conversation',
+    invalidEmail: 'Enter a valid email address.',
+    invalidRegistrationPassword: 'Use at least 10 characters, including a letter and a number.',
+    passwordRequired: 'Enter your password.',
+    authConfigurationError: 'The secure account service could not be reached. Please try again later.',
+    authSubmitting: 'Please wait…',
     language: 'فارسی',
   },
 } as const
