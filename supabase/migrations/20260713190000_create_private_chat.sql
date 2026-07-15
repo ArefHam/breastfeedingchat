@@ -263,7 +263,7 @@ begin
 
   insert into public.messages (conversation_id, request_id, role, content, status)
   values (p_conversation_id, p_request_id, 'assistant', btrim(p_answer), 'completed')
-  on conflict (conversation_id, request_id, role)
+  on conflict (request_id, role)
   do update set content = excluded.content, status = 'completed'
   returning id into v_assistant_message_id;
 
