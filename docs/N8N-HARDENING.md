@@ -2,6 +2,14 @@
 
 The legacy browser calls `https://n8n.eveai.cloud/webhook/...`. The n8n MCP connection available during implementation resolves to `https://mindn8n.eveai.cloud`, where the breastfeeding workflow is not present. Those are different instances, so no live workflow was edited.
 
+## Verified state on 2026-07-15
+
+- The remote Supabase project has no deployed Edge Functions, no configured Edge Function secrets, and no `conversations` table. The browser therefore stops at the missing Supabase `chat` endpoint and cannot call n8n.
+- Remote database lint passes. `supabase db push --dry-run` would apply only `20260713190000_create_private_chat.sql`; no migration has been applied.
+- The supplied nine-node workflow fails runtime validation with two errors: the `Output Json` raw expression is not valid JSON, and the Webhook response-node flow does not guarantee a response on error.
+- The supplied workflow still uses Redis memory, ignores the `history`, `requestId`, and `lang` fields sent by Supabase, exposes an unauthenticated production webhook, has no fallback for invalid input, and has no structured upstream error response.
+- The available n8n administration connection still targets `mindn8n.eveai.cloud`, not the workflow's `n8n.eveai.cloud` instance.
+
 Apply the following changes on the instance that owns the breastfeeding workflow. Duplicate the existing workflow first and keep the replacement inactive until every check passes.
 
 ## Required input and output
@@ -39,6 +47,9 @@ The only successful response contract is:
 8. Route missing retrieval, invalid model output, model timeout, and upstream failure to sanitized error responses. Do not return node names, stack traces, prompts, retrieved documents, credential details, or provider payloads.
 9. Ensure the final Respond-to-Webhook node returns exactly `{ "answer": "..." }` on success.
 10. Set successful execution-body retention to none. Retain failed executions only long enough to troubleshoot, with the instance pruning policy set to 24 hours (`EXECUTIONS_DATA_PRUNE=true`, `EXECUTIONS_DATA_MAX_AGE=24`) where instance configuration is available.
+11. Replace the generated RAG parameter `parameters0_Value` with a descriptive `query` parameter and explain the expected language, baby age, and clinical context in its `$fromAI()` description.
+12. Remove the blank assignment from `Get Text1`, disable `returnIntermediateSteps`, and upgrade the HTTP Request Tool, Switch, and AI Agent node versions using the live instance's node schemas.
+13. Return validation failures as HTTP 400 and sanitized RAG/model failures as HTTP 502/504. Every branch must terminate at a Respond-to-Webhook node.
 
 ## Activation order
 
