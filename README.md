@@ -98,4 +98,6 @@ Repository Actions variables:
 
 The CI workflow verifies type safety, lint, unit tests, five responsive browser projects, the production build, and the bundle secret scan. The Pages workflow deploys only from `main`, so this feature branch cannot replace the current site prematurely.
 
+For a Coolify static-site deployment on a root domain, set `VITE_BASE_PATH=/`, use Nixpacks, enable static-site mode, and publish `dist`. GitHub Pages should omit this variable so the default `/breastfeedingchat/` path is retained.
+
 See [`docs/N8N-HARDENING.md`](docs/N8N-HARDENING.md), [`docs/SECURITY.md`](docs/SECURITY.md), and [`docs/LAUNCH-CHECKLIST.md`](docs/LAUNCH-CHECKLIST.md) before launch.
