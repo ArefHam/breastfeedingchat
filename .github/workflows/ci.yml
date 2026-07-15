@@ -28,3 +28,10 @@ jobs:
       - run: npm run test:e2e
       - run: npm run build
       - run: npm run verify:bundle
+      - name: Build production Docker image
+        run: |
+          docker build \
+            --build-arg VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
+            --build-arg VITE_SUPABASE_PUBLISHABLE_KEY="$VITE_SUPABASE_PUBLISHABLE_KEY" \
+            --build-arg VITE_BASE_PATH=/ \
+            --tag breastfeeding-chat:ci .
