@@ -8,7 +8,7 @@ The original single-file app is preserved byte-for-byte in [`legacy/index-static
 
 ```mermaid
 flowchart LR
-  B["React app on GitHub Pages"] -->|"Supabase Auth + user JWT"| E["Supabase Edge Function"]
+  B["React app on Coolify or GitHub Pages"] -->|"Supabase Auth + user JWT"| E["Supabase Edge Function"]
   E -->|"service-only RPCs"| P[("Postgres with RLS")]
   E -->|"authenticated private webhook"| N["n8n RAG agent"]
   N -->|"answer response"| E
@@ -77,7 +77,7 @@ npx supabase functions deploy chat
 npx supabase functions deploy delete-account
 ```
 
-In the remote Supabase Auth settings, enable Email/Password, disable mandatory email confirmation for v1, set the site URL to `https://arefham.github.io/breastfeedingchat/`, and keep the minimum password policy aligned with `supabase/config.toml` (10 characters with letters and digits). The functions deliberately disable the gateway's legacy JWT check because the app uses new publishable keys; each function extracts and validates the user's JWT before doing any work.
+The remote Supabase Auth settings are managed from `supabase/config.toml`: Email/Password is enabled, mandatory email confirmation is disabled for v1, `https://testchat.eveai.cloud/` is the primary site URL, and GitHub Pages plus local development remain allowed redirects. The minimum password policy is 10 characters with letters and digits. The functions deliberately disable the gateway's legacy JWT check because the app uses new publishable keys; each function extracts and validates the user's JWT before doing any work.
 
 ## Two-user RLS proof
 
