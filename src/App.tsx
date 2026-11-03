@@ -5,6 +5,7 @@ import { Baby, ChevronDown, Languages, Menu, ShieldCheck } from 'lucide-react'
 import { AuthScreen } from './components/AuthScreen'
 import { ChatView } from './components/ChatView'
 import { ConversationSidebar } from './components/ConversationSidebar'
+import { Dialog, type DialogRequest } from './components/Dialog'
 import { direction, t } from './i18n'
 import { supabase } from './lib/supabase'
 import { titleSchema } from './lib/validation'
@@ -12,6 +13,11 @@ import type { ChatMessage, ChatResponse, Conversation, Language } from './types'
 import './styles.css'
 
 const LANGUAGE_KEY = 'breastfeeding_chat_language'
+const PENDING_POLL_MS = 4000
+
+function hasPendingMessage(messages: ChatMessage[] | undefined): boolean {
+  return Boolean(messages?.some((message) => message.role === 'user' && message.status === 'pending'))
+}
 
 function initialLanguage(): Language {
   const stored = localStorage.getItem(LANGUAGE_KEY)
@@ -28,6 +34,8 @@ export default function App() {
   const [accountOpen, setAccountOpen] = useState(false)
   const [optimisticMessage, setOptimisticMessage] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [dialog, setDialog] = useState<DialogRequest | null>(null)
+  const accountRef = useRef<HTMLDivElement>(null)
   const initializedSelection = useRef(false)
 
   useEffect(() => {
@@ -90,7 +98,36 @@ export default function App() {
       if (error) throw error
       return data as ChatMessage[]
     },
+    // Keep checking while an answer is still pending, e.g. after the browser lost its connection mid-request.
+    refetchInterval: (query) => (hasPendingMessage(query.state.data) ? PENDING_POLL_MS : false),
   })
+
+  const pendingInView = hasPendingMessage(messagesQuery.data)
+  const wasPending = useRef(false)
+  useEffect(() => {
+    // When a pending answer arrives by polling, refresh the sidebar and clear the error banner.
+    if (wasPending.current && !pendingInView) {
+      setNotice(null)
+      void queryClient.invalidateQueries({ queryKey: ['conversations', session?.user.id] })
+    }
+    wasPending.current = pendingInView
+  }, [pendingInView, queryClient, session?.user.id])
+
+  useEffect(() => {
+    if (!accountOpen) return
+    function onPointer(event: MouseEvent) {
+      if (!accountRef.current?.contains(event.target as Node)) setAccountOpen(false)
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setAccountOpen(false)
+    }
+    document.addEventListener('mousedown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [accountOpen])
 
   const sendMutation = useMutation({
     mutationFn: async ({ message, requestId, conversationId }: { message: string; requestId: string; conversationId: string | null }) => {
@@ -134,7 +171,17 @@ export default function App() {
         setSelectedId(failedConversationId)
         initializedSelection.current = true
       }
-      setNotice(status === 429 ? t(language, 'rateLimited') : t(language, 'sendError'))
+      const errorName = (error as { name?: string })?.name
+      if (status === 409) {
+        // The same message is still being answered on the server; polling picks the answer up.
+        setNotice(null)
+      } else if (status === 429) {
+        setNotice(t(language, 'rateLimited'))
+      } else if (errorName === 'FunctionsFetchError' || !context) {
+        setNotice(t(language, 'networkError'))
+      } else {
+        setNotice(t(language, 'sendError'))
+      }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['conversations', session?.user.id] }),
         queryClient.invalidateQueries({ queryKey: ['messages', failedConversationId] }),
@@ -151,28 +198,55 @@ export default function App() {
     setNotice(null)
   }
 
-  async function renameConversation(conversation: Conversation) {
-    const nextTitle = window.prompt(t(language, 'renamePrompt'), conversation.title)
-    const parsed = titleSchema.safeParse(nextTitle)
-    if (!parsed.success) return
-    const { error } = await supabase.from('conversations').update({ title: parsed.data }).eq('id', conversation.id)
-    if (!error) await queryClient.invalidateQueries({ queryKey: ['conversations', session?.user.id] })
+  function renameConversation(conversation: Conversation) {
+    setDialog({
+      title: t(language, 'renameConversation'),
+      body: t(language, 'renamePrompt'),
+      input: { value: conversation.title, maxLength: 120 },
+      confirmLabel: t(language, 'save'),
+      onConfirm: async (value) => {
+        const parsed = titleSchema.safeParse(value)
+        if (!parsed.success) return t(language, 'actionFailed')
+        const { error } = await supabase.from('conversations').update({ title: parsed.data }).eq('id', conversation.id)
+        if (error) return t(language, 'actionFailed')
+        await queryClient.invalidateQueries({ queryKey: ['conversations', session?.user.id] })
+      },
+    })
   }
 
-  async function deleteConversation(conversation: Conversation) {
-    if (!window.confirm(`${t(language, 'deleteConversation')}؟`)) return
-    const { error } = await supabase.from('conversations').delete().eq('id', conversation.id)
-    if (error) return
-    if (selectedId === conversation.id) setSelectedId(null)
-    await queryClient.invalidateQueries({ queryKey: ['conversations', session?.user.id] })
+  function deleteConversation(conversation: Conversation) {
+    setDialog({
+      title: t(language, 'deleteConversation'),
+      body: t(language, 'deleteConversationConfirm'),
+      confirmLabel: t(language, 'deleteConversation'),
+      danger: true,
+      onConfirm: async () => {
+        const { error } = await supabase.from('conversations').delete().eq('id', conversation.id)
+        if (error) return t(language, 'actionFailed')
+        if (selectedId === conversation.id) setSelectedId(null)
+        await queryClient.invalidateQueries({ queryKey: ['conversations', session?.user.id] })
+      },
+    })
   }
 
-  async function deleteAccount() {
-    if (!session?.user.email) return
-    const confirmation = window.prompt(t(language, 'deleteAccountPrompt'))
-    if (confirmation?.trim().toLowerCase() !== session.user.email.toLowerCase()) return
-    const { error } = await supabase.functions.invoke('delete-account', { body: { confirmation } })
-    if (!error) await supabase.auth.signOut()
+  function deleteAccount() {
+    const email = session?.user.email
+    if (!email) return
+    setAccountOpen(false)
+    setDialog({
+      title: t(language, 'deleteAccount'),
+      body: t(language, 'deleteAccountPrompt'),
+      input: { value: '', dir: 'ltr', type: 'email' },
+      confirmLabel: t(language, 'deleteAccount'),
+      danger: true,
+      onConfirm: async (value) => {
+        const confirmation = value.trim()
+        if (confirmation.toLowerCase() !== email.toLowerCase()) return t(language, 'emailMismatch')
+        const { error } = await supabase.functions.invoke('delete-account', { body: { confirmation } })
+        if (error) return t(language, 'actionFailed')
+        await supabase.auth.signOut()
+      },
+    })
   }
 
   function toggleLanguage() {
@@ -196,9 +270,9 @@ export default function App() {
         open={sidebarOpen}
         selectedId={selectedId}
         onClose={() => setSidebarOpen(false)}
-        onDelete={(conversation) => void deleteConversation(conversation)}
+        onDelete={deleteConversation}
         onNew={startNewConversation}
-        onRename={(conversation) => void renameConversation(conversation)}
+        onRename={renameConversation}
         onSelect={setSelectedId}
       />
 
@@ -219,7 +293,7 @@ export default function App() {
             <button className="language-button" type="button" onClick={toggleLanguage}>
               <Languages aria-hidden="true" size={17} />{t(language, 'language')}
             </button>
-            <div className="account-control">
+            <div className="account-control" ref={accountRef}>
               <button className="account-trigger" type="button" aria-expanded={accountOpen} onClick={() => setAccountOpen((value) => !value)}>
                 <span aria-hidden="true">{session.user.email?.slice(0, 1).toUpperCase()}</span>
                 <ChevronDown aria-hidden="true" size={16} />
@@ -229,7 +303,7 @@ export default function App() {
                   <p>{t(language, 'account')}</p>
                   <strong dir="ltr">{session.user.email}</strong>
                   <button type="button" onClick={() => void supabase.auth.signOut()}>{t(language, 'logout')}</button>
-                  <button className="danger-action" type="button" onClick={() => void deleteAccount()}>{t(language, 'deleteAccount')}</button>
+                  <button className="danger-action" type="button" onClick={deleteAccount}>{t(language, 'deleteAccount')}</button>
                 </div>
               )}
             </div>
@@ -242,11 +316,12 @@ export default function App() {
           language={language}
           messages={messagesQuery.data ?? []}
           optimisticMessage={optimisticMessage}
-        sending={sendMutation.isPending}
-        onSend={sendMessage}
-        onRetry={(message) => sendMessage(message.content, message.request_id, message.conversation_id)}
-      />
+          sending={sendMutation.isPending}
+          onSend={sendMessage}
+          onRetry={(message) => sendMessage(message.content, message.request_id, message.conversation_id)}
+        />
       </main>
+      {dialog && <Dialog language={language} request={dialog} onClose={() => setDialog(null)} />}
     </div>
   )
 }

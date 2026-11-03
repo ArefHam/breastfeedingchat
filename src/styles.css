@@ -375,6 +375,45 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .care-note { font-size: .66rem; }
 }
 
+/* Answer formatting: headings, quotes, code, tables */
+.message-content h3,
+.message-content h4 { font-size: 1rem; line-height: 1.6; }
+.message-content h3:first-child,
+.message-content h4:first-child { margin-top: 0; }
+.message-content blockquote { margin: 8px 0; padding: 4px 12px; border-inline-start: 3px solid var(--sage); color: var(--muted); }
+.message-content hr { margin: 12px 0; border: 0; border-top: 1px solid var(--line); }
+.message-content code { padding: 1px 5px; border-radius: 6px; background: rgba(96, 108, 56, 0.1); font-size: .92em; }
+.message-content pre { overflow-x: auto; padding: 10px 12px; border-radius: 10px; background: rgba(96, 108, 56, 0.08); }
+.message-content pre code { padding: 0; background: none; }
+.table-scroll { max-width: 100%; overflow-x: auto; margin: 8px 0; }
+.message-content table { border-collapse: collapse; font-size: .9rem; }
+.message-content th,
+.message-content td { padding: 6px 10px; border: 1px solid var(--line); text-align: start; vertical-align: top; }
+.message-content th { background: rgba(139, 157, 131, 0.16); }
+
+/* Answer tools and pending state */
+.message-tools { display: flex; justify-content: flex-end; margin-top: 6px; }
+.copy-button { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: .74rem; cursor: pointer; }
+.copy-button:hover { background: rgba(139, 157, 131, 0.18); color: var(--moss); }
+.message-pending { margin-top: 6px; color: var(--muted); }
+
+/* Quiet scrollbars that match the palette */
+.message-scroll,
+.conversation-list { scrollbar-width: thin; scrollbar-color: rgba(96, 108, 56, 0.35) transparent; }
+
+/* In-app dialog (replaces window.prompt / window.confirm) */
+.dialog-scrim { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 18px; background: rgba(48, 58, 43, 0.38); }
+.dialog-panel { width: min(420px, 100%); padding: 22px; display: grid; gap: 12px; border: 1px solid var(--line); border-radius: 22px; background: var(--oat); box-shadow: var(--shadow); }
+.dialog-panel h2 { margin: 0; font-size: 1.1rem; }
+.dialog-panel p { margin: 0; color: var(--muted); line-height: 1.7; }
+.dialog-panel input { min-height: 46px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.45); color: var(--ink); font: inherit; }
+.dialog-panel input:focus { outline: 0; border-color: var(--moss); box-shadow: 0 0 0 4px rgba(96,108,56,.1); }
+.dialog-actions { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 4px; }
+.dialog-actions .primary-button { min-height: 44px; padding: 0 18px; border-radius: 14px; font: inherit; font-weight: 700; }
+.dialog-actions .primary-button.danger { background: var(--danger); }
+.dialog-actions .primary-button.danger:hover:not(:disabled) { background: #6f301f; }
+.dialog-actions button:disabled { opacity: .6; cursor: wait; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }

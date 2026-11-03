@@ -11,13 +11,23 @@ interface AuthScreenProps {
 }
 
 function authFailureMessage(language: Language, error: unknown): string {
-  const status = typeof error === 'object' && error !== null && 'status' in error
-    ? Number(error.status)
-    : undefined
+  const details = (typeof error === 'object' && error !== null ? error : {}) as {
+    status?: unknown
+    code?: unknown
+    name?: unknown
+  }
+  const status = details.status === undefined ? undefined : Number(details.status)
+  const code = typeof details.code === 'string' ? details.code : ''
 
-  return status === 401 || status === 403
-    ? t(language, 'authConfigurationError')
-    : t(language, 'authError')
+  if (details.name === 'AuthRetryableFetchError' || status === 0 || error instanceof TypeError) {
+    return t(language, 'authNetworkError')
+  }
+  if (code === 'invalid_credentials') return t(language, 'authInvalidCredentials')
+  if (code === 'user_already_exists' || code === 'email_exists') return t(language, 'authUserExists')
+  if (code === 'weak_password') return t(language, 'invalidRegistrationPassword')
+  if (code === 'over_request_rate_limit' || status === 429) return t(language, 'authRateLimited')
+  if (status === 401 || status === 403) return t(language, 'authConfigurationError')
+  return t(language, 'authError')
 }
 
 export function AuthScreen({ language, onToggleLanguage }: AuthScreenProps) {
