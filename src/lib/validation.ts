@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const emailSchema = z.string().trim().email().max(254)
-export const passwordSchema = z.string().min(10).max(128).regex(/\p{L}/u).regex(/\p{N}/u)
+export const passwordSchema = z.string().min(6).max(128)
 export const messageSchema = z.string().trim().min(1).max(4000)
 export const titleSchema = z.string().trim().min(1).max(120)
 

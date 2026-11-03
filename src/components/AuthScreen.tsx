@@ -120,7 +120,7 @@ export function AuthScreen({ language, onToggleLanguage }: AuthScreenProps) {
               aria-describedby={mode === 'register' ? 'password-hint' : undefined}
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
               dir="ltr"
-              minLength={mode === 'register' ? 10 : undefined}
+              minLength={mode === 'register' ? 6 : undefined}
               onChange={(event) => setPassword(event.target.value)}
               required
               type="password"
@@ -134,7 +134,7 @@ export function AuthScreen({ language, onToggleLanguage }: AuthScreenProps) {
               <input
                 autoComplete="new-password"
                 dir="ltr"
-                minLength={10}
+                minLength={6}
                 onChange={(event) => setConfirmation(event.target.value)}
                 required
                 type="password"

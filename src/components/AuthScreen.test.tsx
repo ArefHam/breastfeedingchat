@@ -39,12 +39,12 @@ describe('AuthScreen', () => {
 
     await user.click(screen.getByRole('button', { name: 'No account? Create one' }))
     await user.type(screen.getByLabelText('Email'), 'mother@example.com')
-    await user.type(screen.getByLabelText('Password'), 'onlyletters')
-    await user.type(screen.getByLabelText('Confirm password'), 'onlyletters')
+    await user.type(screen.getByLabelText('Password'), 'abc12')
+    await user.type(screen.getByLabelText('Confirm password'), 'abc12')
     await user.click(screen.getByRole('button', { name: 'Create account' }))
 
     expect(authMocks.signUp).not.toHaveBeenCalled()
-    expect(screen.getByRole('alert')).toHaveTextContent('Use at least 10 characters, including a letter and a number.')
+    expect(screen.getByRole('alert')).toHaveTextContent('Use at least 6 characters.')
   })
 
   it('shows a safe configuration message for an authorization failure', async () => {

@@ -77,7 +77,7 @@ npx supabase functions deploy chat
 npx supabase functions deploy delete-account
 ```
 
-The remote Supabase Auth settings are managed from `supabase/config.toml`: Email/Password is enabled, mandatory email confirmation is disabled for v1, `https://testchat.eveai.cloud/` is the primary site URL, and GitHub Pages plus local development remain allowed redirects. The minimum password policy is 10 characters with letters and digits. The functions deliberately disable the gateway's legacy JWT check because the app uses new publishable keys; each function extracts and validates the user's JWT before doing any work.
+The remote Supabase Auth settings are managed from `supabase/config.toml`: Email/Password is enabled, mandatory email confirmation is disabled for v1, `https://testchat.eveai.cloud/` is the primary site URL, and GitHub Pages plus local development remain allowed redirects. The minimum password policy is 6 characters with no required character classes. The functions deliberately disable the gateway's legacy JWT check because the app uses new publishable keys; each function extracts and validates the user's JWT before doing any work.
 
 ## Two-user RLS proof
 
